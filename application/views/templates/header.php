@@ -89,6 +89,38 @@
             width: 100%;
         }
         
+        /* ===== GLOBAL THEME TRANSITION ===== */
+        /* Smooth transition for all color-related properties when switching themes */
+        *,
+        *::before,
+        *::after {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow, --tw-ring-color, --tw-ring-offset-color, --tw-gradient-from, --tw-gradient-to;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        
+        /* Exclude elements that should NOT have theme transition */
+        /* This prevents interference with intentional animations */
+        [data-aos],
+        [data-aos] *,
+        .animate-ping,
+        .animate-spin,
+        .animate-bounce,
+        .animate-pulse,
+        video,
+        canvas,
+        iframe {
+            transition-property: none !important;
+        }
+        
+        /* Re-enable color transition for AOS elements after they're animated */
+        [data-aos].aos-animate,
+        [data-aos].aos-animate * {
+            transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+        
         /* Alpine.js cloak - hide elements until Alpine loads */
         [x-cloak] { 
             display: none !important; 

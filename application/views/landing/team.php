@@ -50,11 +50,11 @@
                         <div class="absolute left-1/2 -bottom-16 w-0.5 h-16 bg-gray-300 dark:bg-slate-600 hidden lg:block"></div>
                         
                         <div class="bg-white dark:bg-[#0f172a] rounded-2xl p-6 border border-gray-200 dark:border-white/10 shadow-xl text-center w-64 md:w-72 transform transition-all duration-500 hover:scale-105">
-                            <div class="w-28 h-28 mx-auto mb-4 p-1 rounded-full border-4 border-white dark:border-slate-700 shadow-sm overflow-hidden">
+                            <div class="w-28 h-28 mx-auto mb-4 rounded-full ring-4 ring-amber-500 ring-offset-4 ring-offset-white dark:ring-offset-[#0f172a] shadow-lg overflow-hidden transition-all duration-300">
                                 <?php if (!empty($director['photo'])): ?>
-                                    <img src="<?= base_url(strpos($director['photo'], 'assets') !== false ? $director['photo'] : 'assets/uploads/' . $director['photo']) ?>" class="w-full h-full object-cover">
+                                    <img src="<?= base_url(strpos($director['photo'], 'assets') !== false ? $director['photo'] : 'assets/uploads/' . $director['photo']) ?>" class="w-full h-full object-cover rounded-full">
                                 <?php else: ?>
-                                    <div class="w-full h-full bg-amber-600 flex items-center justify-center text-white text-4xl font-black">
+                                    <div class="w-full h-full bg-amber-500 flex items-center justify-center text-white text-4xl font-black rounded-full">
                                         <?= substr($director['name'], 0, 1) ?>
                                     </div>
                                 <?php endif; ?>
