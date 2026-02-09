@@ -185,7 +185,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Dynamic base path calculation for local/production consistency
             const basePath = window.location.pathname.split('/admin/')[0];
-            const fetchUrl = basePath + '/admin/traffic/get/10710/sfp-sfpplus1-fibernet';
+            // Use default endpoint - will use ZABBIX_DEFAULT_HOST & ZABBIX_DEFAULT_INTERFACE from .env
+            const fetchUrl = basePath + '/admin/traffic/get';
             
             const response = await fetch(fetchUrl);
             const data = await response.json();

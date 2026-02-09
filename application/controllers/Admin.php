@@ -1454,19 +1454,24 @@ class Admin extends Admin_Controller {
     // =====================================================
     
     /**
-     * Traffic Data API Endpoint
+     * Traffic Data API Endpoint - SCALABLE VERSION
      * 
      * Endpoint untuk mengambil data RX/TX dari Zabbix API.
-     * URL: /admin/traffic/get/{hostid}/{sfp_name}
+     * Menggunakan dynamic lookup berdasarkan nama host & interface.
+     * TIDAK ada hardcoded item IDs!
      * 
-     * Best Practice: Langsung akses RX/TX via history.get
-     * tanpa lookup host/item secara berurutan.
+     * Actions:
+     * - get: Ambil traffic data RX/TX
+     * - hosts: List semua hosts
+     * - interfaces: List interfaces untuk host tertentu
+     * - clear-cache: Hapus cache
      * 
-     * @param string $hostid Host ID Zabbix (default: 10710)
-     * @param string $sfp_name SFP Name untuk filter (default: sfp-sfpplus1-fibernet)
+     * @param string $action Action to perform
+     * @param string $param1 Host name atau Host ID (tergantung action)
+     * @param string $param2 Interface name (untuk action 'get')
      * @return JSON
      */
-    public function traffic($action = 'get', $hostid = '10710', $sfp_name = 'sfp-sfpplus1-fibernet')
+    public function traffic($action = 'get', $param1 = null, $param2 = null)
     {
         // Set header JSON
         header('Content-Type: application/json');
@@ -1475,40 +1480,58 @@ class Admin extends Admin_Controller {
         // Load Zabbix Model
         $this->load->model('Zabbix_model');
 
+        // Action: get - Ambil traffic data RX/TX
         if ($action === 'get') {
-            // === BEST PRACTICE: LANGSUNG AKSES RX/TX ===
-            // Item IDs sudah diketahui dari testing Postman:
-            // RX (Incoming): 423546 - Interface sfp-sfpplus1-fibernet: Bits received
-            // TX (Outgoing): 423603 - Interface sfp-sfpplus1-fibernet: Bits sent
-            
-            $rx_itemid = '423546';
-            $tx_itemid = '423603';
+            // param1 = host_name (optional, default dari config)
+            // param2 = interface_name (optional, default dari config)
+            $host_name = $param1 ? urldecode($param1) : null;
+            $interface_name = $param2 ? urldecode($param2) : null;
 
-            // Fetch data 12 jam terakhir dengan limit 500 data points
-            $result = $this->Zabbix_model->get_traffic_data($rx_itemid, $tx_itemid, 500);
+            // Fetch data dengan dynamic lookup (12 jam, 500 data points)
+            $result = $this->Zabbix_model->get_traffic_data($host_name, $interface_name, 500, 12);
 
             echo json_encode($result);
             return;
         }
 
-        // Action: hosts - untuk browsing hosts (optional)
+        // Action: hosts - List semua hosts
         if ($action === 'hosts') {
             $hosts = $this->Zabbix_model->get_hosts();
             echo json_encode(['success' => true, 'data' => $hosts]);
             return;
         }
 
-        // Action: items - untuk mencari items di host tertentu
-        if ($action === 'items') {
-            $items = $this->Zabbix_model->get_items($hostid, $sfp_name);
-            echo json_encode(['success' => true, 'data' => $items]);
+        // Action: interfaces - List interfaces untuk host tertentu
+        if ($action === 'interfaces') {
+            // param1 = host_name
+            if (empty($param1)) {
+                echo json_encode(['success' => false, 'error' => 'Host name required']);
+                return;
+            }
+            
+            // Cari host dulu by name
+            $host = $this->Zabbix_model->find_host_by_name(urldecode($param1));
+            if (empty($host)) {
+                echo json_encode(['success' => false, 'error' => 'Host not found']);
+                return;
+            }
+            
+            $interfaces = $this->Zabbix_model->get_host_interfaces($host['hostid']);
+            echo json_encode(['success' => true, 'host' => $host, 'data' => $interfaces]);
+            return;
+        }
+
+        // Action: clear-cache - Hapus semua cache Zabbix
+        if ($action === 'clear-cache') {
+            $cleared = $this->Zabbix_model->clear_cache();
+            echo json_encode(['success' => true, 'message' => "Cleared {$cleared} cache files"]);
             return;
         }
 
         // Default: error
         echo json_encode([
             'success' => false,
-            'error' => 'Invalid action. Use: get, hosts, items'
+            'error' => 'Invalid action. Use: get, hosts, interfaces, clear-cache'
         ]);
     }
 }
