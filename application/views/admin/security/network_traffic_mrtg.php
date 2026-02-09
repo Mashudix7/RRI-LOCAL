@@ -38,16 +38,6 @@
                             <tbody class="font-weight-bold">
                                 <tr>
                                     <td class="text-left d-flex align-items-center">
-                                        <span class="d-inline-block w-3 h-3 rounded mr-2" style="background: #e64a19;"></span>
-                                        <span class="dark:text-slate-300">Outgoing traffic (TX)</span>
-                                    </td>
-                                    <td id="tx-last" class="text-orange">-</td>
-                                    <td id="tx-min">-</td>
-                                    <td id="tx-avg">-</td>
-                                    <td id="tx-max">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-left d-flex align-items-center">
                                         <span class="d-inline-block w-3 h-3 rounded mr-2" style="background: #2d8e2d;"></span>
                                         <span class="dark:text-slate-300">Incoming traffic (RX)</span>
                                     </td>
@@ -55,6 +45,16 @@
                                     <td id="rx-min">-</td>
                                     <td id="rx-avg">-</td>
                                     <td id="rx-max">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-left d-flex align-items-center">
+                                        <span class="d-inline-block w-3 h-3 rounded mr-2" style="background: #e64a19;"></span>
+                                        <span class="dark:text-slate-300">Outgoing traffic (TX)</span>
+                                    </td>
+                                    <td id="tx-last" class="text-orange">-</td>
+                                    <td id="tx-min">-</td>
+                                    <td id="tx-avg">-</td>
+                                    <td id="tx-max">-</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -136,21 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         series: [
             {
-                name: 'Sent (TX)',
-                type: 'line',
-                data: [],
-                smooth: true,
-                symbol: 'none',
-                areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(230, 74, 25, 0.8)' },
-                        { offset: 1, color: 'rgba(230, 74, 25, 0.1)' }
-                    ])
-                },
-                lineStyle: { color: '#e64a19', width: 2 },
-                itemStyle: { color: '#e64a19' }
-            },
-            {
                 name: 'Received (RX)',
                 type: 'line',
                 data: [],
@@ -164,6 +149,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 lineStyle: { color: '#2d8e2d', width: 2 },
                 itemStyle: { color: '#2d8e2d' }
+            },
+            {
+                name: 'Sent (TX)',
+                type: 'line',
+                data: [],
+                smooth: true,
+                symbol: 'none',
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(230, 74, 25, 0.8)' },
+                        { offset: 1, color: 'rgba(230, 74, 25, 0.1)' }
+                    ])
+                },
+                lineStyle: { color: '#e64a19', width: 2 },
+                itemStyle: { color: '#e64a19' }
             }
         ]
     };
@@ -211,8 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 myChart.setOption({
                     xAxis: { data: timestamps },
                     series: [
-                        { data: txValues },
-                        { data: rxValues }
+                        { data: rxValues },
+                        { data: txValues }
                     ]
                 });
 

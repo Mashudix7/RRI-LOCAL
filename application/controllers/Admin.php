@@ -1478,14 +1478,14 @@ class Admin extends Admin_Controller {
         if ($action === 'get') {
             // === BEST PRACTICE: LANGSUNG AKSES RX/TX ===
             // Item IDs sudah diketahui dari testing Postman:
-            // RX (Incoming): 423546
-            // TX (Outgoing): 423603
+            // RX (Incoming): 423546 - Interface sfp-sfpplus1-fibernet: Bits received
+            // TX (Outgoing): 423603 - Interface sfp-sfpplus1-fibernet: Bits sent
             
-            $rx_itemid = '423546'; // sfp-sfpplus1-fibernet RX Power
-            $tx_itemid = '423603'; // sfp-sfpplus1-fibernet TX Power
+            $rx_itemid = '423546';
+            $tx_itemid = '423603';
 
-            // Fetch data langsung
-            $result = $this->Zabbix_model->get_traffic_data($rx_itemid, $tx_itemid, 300);
+            // Fetch data 12 jam terakhir dengan limit 500 data points
+            $result = $this->Zabbix_model->get_traffic_data($rx_itemid, $tx_itemid, 500);
 
             echo json_encode($result);
             return;

@@ -111,16 +111,21 @@ class Zabbix_model extends CI_Model {
      * 
      * @param string $itemid Item ID untuk mengambil history
      * @param int $limit Jumlah record yang diambil
+     * @param int $hours_back Berapa jam ke belakang (default: 12 jam)
      * @return array Response dari API
      */
-    private function _get_history($itemid, $limit = 300)
+    private function _get_history($itemid, $limit = 500, $hours_back = 12)
     {
+        // Hitung time_from (12 jam yang lalu)
+        $time_from = time() - ($hours_back * 3600);
+        
         $payload = [
             'jsonrpc' => '2.0',
             'method' => 'history.get',
             'params' => [
                 'itemids' => $itemid,
-                'history' => 3, // Unsigned integer (untuk traffic data)
+                'history' => 3, // Unsigned integer (untuk traffic data bps)
+                'time_from' => $time_from,
                 'sortfield' => 'clock',
                 'sortorder' => 'ASC',
                 'limit' => $limit
