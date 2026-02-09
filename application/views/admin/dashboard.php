@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 1. Filter unique entries by IP to ensure variety
         const uniqueEntries = new Map();
         [...records].reverse().forEach(r => {
-            const key = r.ip || r.src_ip || 'Unknown';
+            const key = r.src_ip || r.ip || 'Unknown';
             if (!uniqueEntries.has(key)) uniqueEntries.set(key, r);
         });
 
@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         entries.forEach((record) => {
             const country = record.country || 'ID';
-            const src_ip = record.ip || record.src_ip || 'Unknown';
+            const src_ip = record.src_ip || record.ip || 'Unknown';
             const module = record.module || 'Web Detection';
             const target_host = record.host || 'RRI SOC';
             
