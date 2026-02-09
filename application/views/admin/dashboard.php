@@ -340,9 +340,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="text-xs p-1">
                                     <div class="font-bold text-red-600 mb-1 border-b border-red-100 pb-1 uppercase tracking-tight">ATTACK DETECTED</div>
                                     <div class="space-y-1 mt-1">
-                                        <div><span class="text-slate-500 font-medium">IP:</span> <span class="font-mono text-slate-800">${d.ip}</span></div>
-                                        <div><span class="text-slate-500 font-medium">From:</span> ${d.fromName}${d.location ? ' • ' + d.location : ''}</div>
-                                        <div><span class="text-slate-500 font-medium">Target:</span> ${d.toName}</div>
+                                        <div><span class="text-slate-500 font-medium">IP:</span> <span class="font-mono" style="color: #1e293b; font-weight: 700;">${d.ip || 'Hidden'}</span></div>
+                                        <div><span class="text-slate-500 font-medium fa-check">From:</span> <span style="color: #334155;">${d.fromName}${d.location ? ' • ' + d.location : ''}</span></div>
+                                        <div><span class="text-slate-500 font-medium">Target:</span> <span style="color: #334155;">${d.toName}</span></div>
                                         <div><span class="text-slate-500 font-medium">Module:</span> <span class="text-blue-600 font-semibold">${d.type}</span></div>
                                     </div>
                                 </div>
@@ -507,6 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (roamTimer) clearTimeout(roamTimer);
                 
                 // Set recall timer: 0.5s after user stops dragging/zooming
+                // This ensures high-res rendering or data alignment happens after movement
                 roamTimer = setTimeout(() => {
                     if (window.lastAttacksData) {
                         updateMapData(window.lastAttacksData);
@@ -522,15 +523,240 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // -----------------------------------------------------
+    // Extended Country Coordinates (180+ Countries)
+    // -----------------------------------------------------
+    const EXTENDED_COUNTRY_COORDS = {
+        'AF': [67.7, 33.9], 'Afghanistan': [67.7, 33.9],
+        'AL': [20.1, 41.1], 'Albania': [20.1, 41.1],
+        'DZ': [1.6, 28.0], 'Algeria': [1.6, 28.0],
+        'AO': [17.8, -11.2], 'Angola': [17.8, -11.2],
+        'AR': [-63.6, -38.4], 'Argentina': [-63.6, -38.4],
+        'AM': [45.0, 40.0], 'Armenia': [45.0, 40.0],
+        'AU': [133.7, -25.2], 'Australia': [133.7, -25.2],
+        'AT': [14.5, 47.5], 'Austria': [14.5, 47.5],
+        'AZ': [47.5, 40.1], 'Azerbaijan': [47.5, 40.1],
+        'BD': [90.3, 23.6], 'Bangladesh': [90.3, 23.6],
+        'BY': [27.9, 53.7], 'Belarus': [27.9, 53.7],
+        'BE': [4.4, 50.5], 'Belgium': [4.4, 50.5],
+        'BZ': [-88.4, 17.1], 'Belize': [-88.4, 17.1],
+        'BJ': [2.3, 9.3], 'Benin': [2.3, 9.3],
+        'BT': [90.4, 27.5], 'Bhutan': [90.4, 27.5],
+        'BO': [-63.5, -16.2], 'Bolivia': [-63.5, -16.2],
+        'BA': [17.6, 43.9], 'Bosnia and Herzegovina': [17.6, 43.9],
+        'BW': [24.6, -22.3], 'Botswana': [24.6, -22.3],
+        'BR': [-51.9, -14.2], 'Brazil': [-51.9, -14.2],
+        'BG': [25.4, 42.7], 'Bulgaria': [25.4, 42.7],
+        'BF': [-1.5, 12.2], 'Burkina Faso': [-1.5, 12.2],
+        'KH': [104.9, 12.5], 'Cambodia': [104.9, 12.5],
+        'CM': [12.3, 7.3], 'Cameroon': [12.3, 7.3],
+        'CA': [-106.3, 56.1], 'Canada': [-106.3, 56.1],
+        'CF': [20.9, 6.6], 'Central African Republic': [20.9, 6.6],
+        'TD': [18.7, 15.4], 'Chad': [18.7, 15.4],
+        'CL': [-71.5, -35.6], 'Chile': [-71.5, -35.6],
+        'CN': [104.1, 35.8], 'China': [104.1, 35.8],
+        'CO': [-74.2, 4.5], 'Colombia': [-74.2, 4.5],
+        'CG': [15.8, -0.2], 'Congo': [15.8, -0.2],
+        'CR': [-83.7, 9.7], 'Costa Rica': [-83.7, 9.7],
+        'HR': [15.2, 45.1], 'Croatia': [15.2, 45.1],
+        'CU': [-77.7, 21.5], 'Cuba': [-77.7, 21.5],
+        'CY': [33.4, 35.1], 'Cyprus': [33.4, 35.1],
+        'CZ': [15.4, 49.8], 'Czech Republic': [15.4, 49.8],
+        'DK': [9.5, 56.2], 'Denmark': [9.5, 56.2],
+        'DJ': [42.5, 11.8], 'Djibouti': [42.5, 11.8],
+        'DO': [-70.1, 18.7], 'Dominican Republic': [-70.1, 18.7],
+        'EC': [-78.1, -1.8], 'Ecuador': [-78.1, -1.8],
+        'EG': [30.8, 26.8], 'Egypt': [30.8, 26.8],
+        'SV': [-88.8, 13.7], 'El Salvador': [-88.8, 13.7],
+        'EE': [25.0, 58.5], 'Estonia': [25.0, 58.5],
+        'ET': [40.4, 9.1], 'Ethiopia': [40.4, 9.1],
+        'FI': [25.7, 61.9], 'Finland': [25.7, 61.9],
+        'FR': [2.2, 46.2], 'France': [2.2, 46.2],
+        'GA': [11.6, -0.8], 'Gabon': [11.6, -0.8],
+        'GM': [-15.3, 13.4], 'Gambia': [-15.3, 13.4],
+        'GE': [43.3, 42.3], 'Georgia': [43.3, 42.3],
+        'DE': [10.4, 51.1], 'Germany': [10.4, 51.1],
+        'GH': [-1.0, 7.9], 'Ghana': [-1.0, 7.9],
+        'GR': [21.8, 39.0], 'Greece': [21.8, 39.0],
+        'GT': [-90.2, 15.7], 'Guatemala': [-90.2, 15.7],
+        'GN': [-9.6, 9.9], 'Guinea': [-9.6, 9.9],
+        'GY': [-58.9, 4.8], 'Guyana': [-58.9, 4.8],
+        'HT': [-72.2, 18.9], 'Haiti': [-72.2, 18.9],
+        'HN': [-86.2, 15.1], 'Honduras': [-86.2, 15.1],
+        'HK': [114.1, 22.3], 'Hong Kong': [114.1, 22.3],
+        'HU': [19.5, 47.1], 'Hungary': [19.5, 47.1],
+        'IS': [-19.0, 64.9], 'Iceland': [-19.0, 64.9],
+        'IN': [78.9, 20.5], 'India': [78.9, 20.5],
+        'ID': [113.9, -0.7], 'Indonesia': [113.9, -0.7],
+        'IR': [53.6, 32.4], 'Iran': [53.6, 32.4],
+        'IQ': [43.6, 33.2], 'Iraq': [43.6, 33.2],
+        'IE': [-8.2, 53.4], 'Ireland': [-8.2, 53.4],
+        'IL': [34.8, 31.0], 'Israel': [34.8, 31.0],
+        'IT': [12.5, 41.8], 'Italy': [12.5, 41.8],
+        'JM': [-77.2, 18.1], 'Jamaica': [-77.2, 18.1],
+        'JP': [138.2, 36.2], 'Japan': [138.2, 36.2],
+        'JO': [36.2, 30.5], 'Jordan': [36.2, 30.5],
+        'KZ': [66.9, 48.0], 'Kazakhstan': [66.9, 48.0],
+        'KE': [37.9, -0.02], 'Kenya': [37.9, -0.02],
+        'KP': [127.5, 40.3], 'North Korea': [127.5, 40.3],
+        'KR': [127.7, 35.9], 'South Korea': [127.7, 35.9],
+        'KW': [47.4, 29.3], 'Kuwait': [47.4, 29.3],
+        'KG': [74.7, 41.2], 'Kyrgyzstan': [74.7, 41.2],
+        'LA': [102.4, 19.8], 'Laos': [102.4, 19.8],
+        'LV': [24.6, 56.8], 'Latvia': [24.6, 56.8],
+        'LB': [35.8, 33.8], 'Lebanon': [35.8, 33.8],
+        'LS': [28.2, -29.6], 'Lesotho': [28.2, -29.6],
+        'LR': [-9.4, 6.4], 'Liberia': [-9.4, 6.4],
+        'LY': [17.2, 26.3], 'Libya': [17.2, 26.3],
+        'LT': [23.8, 55.1], 'Lithuania': [23.8, 55.1],
+        'LU': [6.1, 49.8], 'Luxembourg': [6.1, 49.8],
+        'MK': [21.7, 41.6], 'Macedonia': [21.7, 41.6],
+        'MG': [46.8, -18.7], 'Madagascar': [46.8, -18.7],
+        'MW': [34.3, -13.2], 'Malawi': [34.3, -13.2],
+        'MY': [101.9, 4.2], 'Malaysia': [101.9, 4.2],
+        'MV': [73.2, 3.2], 'Maldives': [73.2, 3.2],
+        'ML': [-3.9, 17.5], 'Mali': [-3.9, 17.5],
+        'MT': [14.3, 35.9], 'Malta': [14.3, 35.9],
+        'MR': [-10.9, 21.0], 'Mauritania': [-10.9, 21.0],
+        'MU': [57.5, -20.3], 'Mauritius': [57.5, -20.3],
+        'MX': [-102.5, 23.6], 'Mexico': [-102.5, 23.6],
+        'MD': [28.3, 47.4], 'Moldova': [28.3, 47.4],
+        'MN': [103.8, 46.8], 'Mongolia': [103.8, 46.8],
+        'ME': [19.3, 42.7], 'Montenegro': [19.3, 42.7],
+        'MA': [-7.0, 31.7], 'Morocco': [-7.0, 31.7],
+        'MZ': [35.5, -18.6], 'Mozambique': [35.5, -18.6],
+        'MM': [95.9, 21.9], 'Myanmar': [95.9, 21.9],
+        'NA': [18.4, -22.9], 'Namibia': [18.4, -22.9],
+        'NP': [84.1, 28.3], 'Nepal': [84.1, 28.3],
+        'NL': [5.2, 52.1], 'Netherlands': [5.2, 52.1],
+        'NZ': [174.8, -40.9], 'New Zealand': [174.8, -40.9],
+        'NI': [-85.2, 12.8], 'Nicaragua': [-85.2, 12.8],
+        'NE': [8.0, 17.6], 'Niger': [8.0, 17.6],
+        'NG': [8.6, 9.0], 'Nigeria': [8.6, 9.0],
+        'NO': [8.4, 60.4], 'Norway': [8.4, 60.4],
+        'OM': [55.9, 21.5], 'Oman': [55.9, 21.5],
+        'PK': [69.3, 30.3], 'Pakistan': [69.3, 30.3],
+        'PA': [-80.7, 8.5], 'Panama': [-80.7, 8.5],
+        'PG': [143.9, -6.3], 'Papua New Guinea': [143.9, -6.3],
+        'PY': [-58.4, -23.4], 'Paraguay': [-58.4, -23.4],
+        'PE': [-75.0, -9.1], 'Peru': [-75.0, -9.1],
+        'PH': [121.7, 12.8], 'Philippines': [121.7, 12.8],
+        'PL': [19.1, 51.9], 'Poland': [19.1, 51.9],
+        'PT': [-8.2, 39.3], 'Portugal': [-8.2, 39.3],
+        'QA': [51.1, 25.3], 'Qatar': [51.1, 25.3],
+        'RO': [24.9, 45.9], 'Romania': [24.9, 45.9],
+        'RU': [105.3, 61.5], 'Russia': [105.3, 61.5],
+        'RW': [29.8, -1.9], 'Rwanda': [29.8, -1.9],
+        'SA': [45.0, 23.8], 'Saudi Arabia': [45.0, 23.8],
+        'SN': [-14.4, 14.4], 'Senegal': [-14.4, 14.4],
+        'RS': [21.0, 44.0], 'Serbia': [21.0, 44.0],
+        'SG': [103.8, 1.3], 'Singapore': [103.8, 1.3],
+        'SK': [19.6, 48.6], 'Slovakia': [19.6, 48.6],
+        'SI': [14.9, 46.1], 'Slovenia': [14.9, 46.1],
+        'SO': [46.1, 5.1], 'Somalia': [46.1, 5.1],
+        'ZA': [22.9, -30.5], 'South Africa': [22.9, -30.5],
+        'ES': [-3.7, 40.4], 'Spain': [-3.7, 40.4],
+        'LK': [80.7, 7.8], 'Sri Lanka': [80.7, 7.8],
+        'SD': [30.2, 12.8], 'Sudan': [30.2, 12.8],
+        'SR': [-56.0, 3.9], 'Suriname': [-56.0, 3.9],
+        'SE': [18.6, 60.1], 'Sweden': [18.6, 60.1],
+        'CH': [8.2, 46.8], 'Switzerland': [8.2, 46.8],
+        'SY': [38.9, 34.8], 'Syria': [38.9, 34.8],
+        'TW': [120.9, 23.6], 'Taiwan': [120.9, 23.6],
+        'TJ': [71.2, 38.8], 'Tajikistan': [71.2, 38.8],
+        'TZ': [34.8, -6.3], 'Tanzania': [34.8, -6.3],
+        'TH': [100.9, 15.8], 'Thailand': [100.9, 15.8],
+        'TL': [125.7, -8.8], 'Timor-Leste': [125.7, -8.8],
+        'TG': [0.8, 8.6], 'Togo': [0.8, 8.6],
+        'TN': [9.5, 33.8], 'Tunisia': [9.5, 33.8],
+        'TR': [35.2, 38.9], 'Turkey': [35.2, 38.9],
+        'TM': [59.5, 38.9], 'Turkmenistan': [59.5, 38.9],
+        'UG': [32.2, 1.3], 'Uganda': [32.2, 1.3],
+        'UA': [31.1, 48.3], 'Ukraine': [31.1, 48.3],
+        'AE': [53.8, 23.4], 'United Arab Emirates': [53.8, 23.4],
+        'GB': [-3.4, 55.3], 'United Kingdom': [-3.4, 55.3], 'UK': [-3.4, 55.3],
+        'US': [-95.7, 37.0], 'United States': [-95.7, 37.0], 'USA': [-95.7, 37.0],
+        'UY': [-55.7, -32.5], 'Uruguay': [-55.7, -32.5],
+        'UZ': [64.5, 41.3], 'Uzbekistan': [64.5, 41.3],
+        'VE': [-66.5, 6.4], 'Venezuela': [-66.5, 6.4],
+        'VN': [108.2, 14.0], 'Vietnam': [108.2, 14.0],
+        'YE': [48.5, 15.5], 'Yemen': [48.5, 15.5],
+        'ZM': [27.8, -13.1], 'Zambia': [27.8, -13.1],
+        'ZW': [29.1, -19.0], 'Zimbabwe': [29.1, -19.0]
+    };
+    
+    // Combine standard and extended coords
+    Object.assign(COUNTRY_COORDS, EXTENDED_COUNTRY_COORDS);
+
+    // -----------------------------------------------------
+    // IP Resolver Cache
+    // -----------------------------------------------------
+    const IP_CACHE = new Map();
+    const RESOLVE_QUEUE = [];
+    let isResolving = false;
+
+    // Process IP resolution queue (max 1 request per 1.5s to be polite to free APIs)
+    function processResolveQueue() {
+        if (RESOLVE_QUEUE.length === 0) {
+            isResolving = false;
+            return;
+        }
+
+        isResolving = true;
+        const ip = RESOLVE_QUEUE.shift();
+        
+        // Skip if already cached
+        if (IP_CACHE.has(ip)) {
+            processResolveQueue();
+            return;
+        }
+
+        // Fetch from ip-api.com
+        fetch(`http://ip-api.com/json/${ip}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    IP_CACHE.set(ip, {
+                        lat: data.lat,
+                        lon: data.lon,
+                        city: data.city,
+                        country: data.country
+                    });
+                    
+                    // Refresh map if we found data
+                    if (window.lastAttacksData) {
+                        updateMapData(window.lastAttacksData);
+                    }
+                } else {
+                    // Mark as failed to avoid retry loop
+                    IP_CACHE.set(ip, { failed: true });
+                }
+            })
+            .catch(err => {
+                console.warn('IP Resolve Error:', err);
+                IP_CACHE.set(ip, { failed: true });
+            })
+            .finally(() => {
+                setTimeout(processResolveQueue, 1500); // Wait 1.5s before next request
+            });
+    }
+
+    function queueIpResolution(ip) {
+        if (!IP_CACHE.has(ip) && !RESOLVE_QUEUE.includes(ip) && RESOLVE_QUEUE.length < 50) {
+            RESOLVE_QUEUE.push(ip);
+            if (!isResolving) processResolveQueue();
+        }
+    }
+
+    // -----------------------------------------------------
     // Data Processing & Updates
     // -----------------------------------------------------
     function updateMapData(records) {
         if (!isMapLoaded || !chartInstance) return;
         
-        // Cache data for 0.5s auto-recall feature
+        // Cache data 
         window.lastAttacksData = records;
 
-        // 1. Filter unique entries by IP to ensure variety
+        // 1. Filter unique entries by IP
         const uniqueEntries = new Map();
         [...records].reverse().forEach(r => {
             const key = r.src_ip || r.ip || 'Unknown';
@@ -539,12 +765,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const lineData = [];
         const scatterData = [];
-        const usedCoords = new Set();
 
         /**
-         * Deterministic Jitter:
-         * Uses a simple hash of the IP to ensure the same IP always gets the same jitter.
-         * This prevents points from "jumping" every 10 seconds.
+         * Deterministic Jitter
          */
         const getDeterministicJitter = (ip, range) => {
             let hash = 0;
@@ -552,7 +775,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 hash = ((hash << 5) - hash) + ip.charCodeAt(i);
                 hash |= 0; 
             }
-            // Use radial distribution for better visual spread
             const angle = (Math.abs(hash) % 360) * (Math.PI / 180);
             const radius = ((Math.abs(hash * 13) % 1000) / 1000) * range;
             return [Math.cos(angle) * radius, Math.sin(angle) * radius];
@@ -561,8 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const applySmartJitter = (coords, ip, isPrecise) => {
             const distToJakarta = Math.sqrt(Math.pow(coords[0] - JAKARTA_COORDS[0], 2) + Math.pow(coords[1] - JAKARTA_COORDS[1], 2));
             
-            // If it's a local attack (Jakarta/same city), use a "Ring Distribution"
-            // This ensures they are spread AROUND the hub, never on top of it.
             if (distToJakarta < 0.5) {
                 let hash = 0;
                 for (let i = 0; i < ip.length; i++) {
@@ -570,7 +790,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     hash |= 0; 
                 }
                 const angle = (Math.abs(hash) % 360) * (Math.PI / 180);
-                // Radius 0.25 to 0.6 ensures they stay in Greater Jakarta but clear the hub
                 const radius = 0.25 + ((Math.abs(hash * 7) % 350) / 1000); 
                 return [JAKARTA_COORDS[0] + Math.cos(angle) * radius, JAKARTA_COORDS[1] + Math.sin(angle) * radius];
             }
@@ -580,7 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return [coords[0] + jitter[0], coords[1] + jitter[1]];
         };
 
-        // Increase limit to 100 for a more "active" look
         const entries = Array.from(uniqueEntries.values()).slice(0, 100);
 
         entries.forEach((record) => {
@@ -591,46 +809,47 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let isPrecise = false;
             let locationName = '';
-            
-            if (record.coords && record.coords.city) {
-                locationName = record.coords.city;
-                isPrecise = true;
-            } else if (record.coords && record.coords.region) {
-                locationName = record.coords.region;
-                isPrecise = true;
-            } else if (record.province && record.province !== '-') {
-                locationName = record.province;
-            } else if (record.city && record.city !== '-') {
-                locationName = record.city;
-            }
-
             let startCoords = null;
-            if (record.coords && record.coords.lon && record.coords.lat) {
-                startCoords = [record.coords.lon, record.coords.lat];
+
+            // Prioritize Real-time Resolved Coords
+            const cachedIp = IP_CACHE.get(src_ip);
+            if (cachedIp && !cachedIp.failed) {
+                startCoords = [cachedIp.lon, cachedIp.lat];
+                locationName = cachedIp.city + ', ' + cachedIp.country;
                 isPrecise = true;
-            } else if (COUNTRY_COORDS[country]) {
+            } 
+            // Fallback to Backend Provided Coords
+            else if (record.coords && record.coords.lon && record.coords.lat) {
+                startCoords = [record.coords.lon, record.coords.lat];
+                locationName = record.coords.city || record.city;
+                isPrecise = true;
+            } 
+            // Fallback to Static Country Coords
+            else if (COUNTRY_COORDS[country]) {
                 startCoords = [...COUNTRY_COORDS[country]];
+                locationName = country;
                 isPrecise = false;
-            } else {
-                startCoords = [0, 0];
+            } 
+            
+            // IP Resolution Queue for Unknowns or Imprecise Locations
+            if (!startCoords || (startCoords[0] === 0 && startCoords[1] === 0)) {
+                if (src_ip !== 'Unknown') queueIpResolution(src_ip);
+                return; // Skip drawing pending IPs to avoid "Point Null Island" (0,0)
             }
 
-            if (!startCoords || (startCoords[0] === 0 && startCoords[1] === 0)) return;
-
-            // Apply deterministic jitter
             const finalCoords = applySmartJitter(startCoords, src_ip, isPrecise);
 
             lineData.push({
-                fromName: country,
+                fromName: locationName || country,
                 toName: target_host,
                 coords: [finalCoords, JAKARTA_COORDS],
                 type: module,
                 ip: src_ip,
-                location: locationName
+                location: locationName || country
             });
 
             scatterData.push({
-                name: country,
+                name: locationName || country,
                 value: [...finalCoords, 10, src_ip, locationName], 
             });
         });
@@ -639,23 +858,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const scatterFinal = scatterData.map((d, i) => {
             return {
                 ...d,
-                label: { show: i < 10 } // Only top 10 recent pins get a persistent label
+                label: { show: i < 10 } 
             };
         });
 
         // Use name-based merging for stability with zero-delay rendering
         chartInstance.setOption({
             series: [
-                { name: 'Attack Lines', data: lineData }, 
-                { name: 'Attack Points', data: scatterFinal }, 
+                { 
+                    name: 'Attack Lines', 
+                    data: lineData,
+                    animation: false 
+                }, 
+                { 
+                    name: 'Attack Points', 
+                    data: scatterFinal,
+                    animation: false 
+                }, 
                 { 
                     name: 'Target Point', 
-                    data: [{ name: 'RRI DEFENSE HUB', value: [...JAKARTA_COORDS, 100] }]
+                    data: [{ name: 'RRI DEFENSE HUB', value: [...JAKARTA_COORDS, 100] }],
+                    animation: false
                 } 
             ]
         }, {
             notMerge: false,
-            lazyUpdate: false
+            lazyUpdate: false,
+            animation: false,
+            animationDurationUpdate: 0
         });
     }
 
