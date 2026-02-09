@@ -1448,4 +1448,67 @@ class Admin extends Admin_Controller {
         $this->load->view('admin/audit', $data);
         $this->load->view('admin/templates/footer', $data);
     }
+
+    // =====================================================
+    // ZABBIX TRAFFIC API ENDPOINT
+    // =====================================================
+    
+    /**
+     * Traffic Data API Endpoint
+     * 
+     * Endpoint untuk mengambil data RX/TX dari Zabbix API.
+     * URL: /admin/traffic/get/{hostid}/{sfp_name}
+     * 
+     * Best Practice: Langsung akses RX/TX via history.get
+     * tanpa lookup host/item secara berurutan.
+     * 
+     * @param string $hostid Host ID Zabbix (default: 10710)
+     * @param string $sfp_name SFP Name untuk filter (default: sfp-sfpplus1-fibernet)
+     * @return JSON
+     */
+    public function traffic($action = 'get', $hostid = '10710', $sfp_name = 'sfp-sfpplus1-fibernet')
+    {
+        // Set header JSON
+        header('Content-Type: application/json');
+        header('Cache-Control: no-cache, must-revalidate');
+
+        // Load Zabbix Model
+        $this->load->model('Zabbix_model');
+
+        if ($action === 'get') {
+            // === BEST PRACTICE: LANGSUNG AKSES RX/TX ===
+            // Item IDs sudah diketahui dari testing Postman:
+            // RX (Incoming): 423546
+            // TX (Outgoing): 423603
+            
+            $rx_itemid = '423546'; // sfp-sfpplus1-fibernet RX Power
+            $tx_itemid = '423603'; // sfp-sfpplus1-fibernet TX Power
+
+            // Fetch data langsung
+            $result = $this->Zabbix_model->get_traffic_data($rx_itemid, $tx_itemid, 300);
+
+            echo json_encode($result);
+            return;
+        }
+
+        // Action: hosts - untuk browsing hosts (optional)
+        if ($action === 'hosts') {
+            $hosts = $this->Zabbix_model->get_hosts();
+            echo json_encode(['success' => true, 'data' => $hosts]);
+            return;
+        }
+
+        // Action: items - untuk mencari items di host tertentu
+        if ($action === 'items') {
+            $items = $this->Zabbix_model->get_items($hostid, $sfp_name);
+            echo json_encode(['success' => true, 'data' => $items]);
+            return;
+        }
+
+        // Default: error
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid action. Use: get, hosts, items'
+        ]);
+    }
 }

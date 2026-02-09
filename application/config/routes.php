@@ -142,9 +142,13 @@ $route['admin/vpn-management/delete/(:any)'] = 'vpn_management/delete/$1';
 $route['admin/reports'] = 'admin/reports';
 $route['admin/audit'] = 'admin/audit_log';
 $route['admin/audit-log'] = 'admin/audit_log';
+
+// Zabbix Traffic API Routes
 $route['admin/traffic/get/(:any)/(:any)'] = 'admin/traffic/get/$1/$2';
 $route['admin/traffic/get/(:any)'] = 'admin/traffic/get/$1';
 $route['admin/traffic/get'] = 'admin/traffic/get';
+$route['admin/traffic/hosts'] = 'admin/traffic/hosts';
+$route['admin/traffic/items/(:any)/(:any)'] = 'admin/traffic/items/$1/$2';
 
 // =====================================================
 // Infrastructure Routes

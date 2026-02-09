@@ -315,6 +315,41 @@ switch (ENVIRONMENT)
 
 /*
  * --------------------------------------------------------------------
+ * LOAD .ENV FILE
+ * --------------------------------------------------------------------
+ *
+ * Load environment variables from .env file for API configurations
+ * like Zabbix, Safeline WAF, etc.
+ */
+$env_file = dirname(__FILE__) . DIRECTORY_SEPARATOR . '.env';
+if (file_exists($env_file)) {
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        // Parse key=value
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            // Remove quotes if present
+            if (preg_match('/^["\'](.*)["\']$/', $value, $matches)) {
+                $value = $matches[1];
+            }
+            // Set as environment variable
+            if (!empty($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
+}
+
+/*
+ * --------------------------------------------------------------------
  * LOAD THE BOOTSTRAP FILE
  * --------------------------------------------------------------------
  *
