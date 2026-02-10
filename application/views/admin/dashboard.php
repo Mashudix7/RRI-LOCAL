@@ -87,6 +87,39 @@
                     </div>
                 </div>
             </div>
+            <!-- Fullscreen Only: Right Panel (Live Attacks) -->
+            <!-- Fullscreen Only: Right Panel (Live Attacks) -->
+            <div id="fs-attack-list" class="hidden absolute top-20 right-6 w-80 bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700/50 z-50 overflow-hidden shadow-2xl transition-all duration-300">
+                <button onclick="toggleFsPanel('fs-attack-list-content', this)" class="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors border-b border-white/5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/20 rounded text-red-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                            <span class="text-[10px] font-bold">LIVE</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-white uppercase tracking-wider">Web Attacks</h4>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="fs-attack-list-content" class="max-h-0 py-0 opacity-0 overflow-hidden overflow-y-auto custom-scrollbar space-y-2 transition-all duration-300 origin-top">
+                    <!-- Content injected via JS -->
+                    <div class="text-center text-slate-500 text-xs py-4">Waiting for data...</div>
+                </div>
+            </div>
+
+            <!-- Fullscreen Only: Bottom Left Panel (Leaderboard) -->
+            <div id="fs-leaderboard" class="hidden absolute bottom-6 left-6 w-80 bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700/50 z-50 shadow-2xl transition-all duration-300">
+                <button onclick="toggleFsPanel('fs-leaderboard-content', this)" class="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors border-b border-white/5">
+                     <div class="flex items-center gap-3">
+                        <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        <h4 class="text-sm font-bold text-white uppercase tracking-wider">Top Attackers</h4>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="fs-leaderboard-content" class="max-h-0 py-0 opacity-0 overflow-hidden overflow-y-auto custom-scrollbar space-y-3 transition-all duration-300 origin-bottom">
+                    <!-- Content injected via JS -->
+                    <div class="text-center text-slate-500 text-xs py-2">Calculating stats...</div>
+                </div>
+            </div>
         </div>
 
         <!-- WAF Activity Card with Link -->
@@ -144,7 +177,7 @@
     <!-- Right Sidebar -->
     <div class="space-y-6">
         <!-- Real-time Web Attack Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col h-[520px]" data-aos="fade-up">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col h-[742px]" data-aos="fade-up">
             <div class="p-6 pb-2 border-b border-gray-50 dark:border-slate-700/50">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Web Attack</h3>
             </div>
@@ -214,6 +247,19 @@
 
 #map-card.map-dark-theme .text-slate-800 {
     color: #f1f5f9 !important;
+}
+
+/* Fullscreen Panels Visibility */
+#map-card:fullscreen #fs-attack-list, 
+#map-card:-webkit-full-screen #fs-attack-list,
+#map-card.is-fullscreen #fs-attack-list {
+    display: block !important;
+}
+
+#map-card:fullscreen #fs-leaderboard,
+#map-card:-webkit-full-screen #fs-leaderboard,
+#map-card.is-fullscreen #fs-leaderboard {
+    display: block !important;
 }
 </style>
 
@@ -918,6 +964,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Immediately process map data regardless of interaction
                 updateMapData(attacks);
                 updateWebAttackList(events);
+                updateLeaderboardStats(attacks);
             }
         } catch (error) {
             console.log('Stats refresh skipped', error);
@@ -928,42 +975,131 @@ document.addEventListener('DOMContentLoaded', function() {
     // Web Attack List Rendering
     // -----------------------------------------------------
     function updateWebAttackList(events) {
-        const syncIndicator = document.getElementById('sync-indicator');
         const listContainer = document.getElementById('web-attack-list');
-        if (!listContainer || !events.length) return;
+        const fsListContainer = document.getElementById('fs-attack-list-content');
+        const syncIndicator = document.getElementById('sync-indicator');
+        
+        if (!events.length) return;
 
-        const html = events.map(record => {
-            const date = new Date((record.timestamp || Date.now() / 1000) * 1000);
-            const formattedDate = date.getFullYear() + '-' + 
-                                String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                                String(date.getDate()).padStart(2, '0') + ' ' + 
-                                String(date.getHours()).padStart(2, '0') + ':' + 
-                                String(date.getMinutes()).padStart(2, '0') + ':' + 
-                                String(date.getSeconds()).padStart(2, '0');
+        // 1. Dashboard List (Standard Style)
+        if (listContainer) {
+            const dashboardHtml = events.map(record => {
+                const date = new Date((record.timestamp || Date.now() / 1000) * 1000);
+                const formattedDate = date.getFullYear() + '-' + 
+                                    String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(date.getDate()).padStart(2, '0') + ' ' + 
+                                    String(date.getHours()).padStart(2, '0') + ':' + 
+                                    String(date.getMinutes()).padStart(2, '0') + ':' + 
+                                    String(date.getSeconds()).padStart(2, '0');
 
-            return `
-                <div class="flex items-start justify-between py-4 border-b border-gray-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors px-2 -mx-2 rounded-lg group">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
-                            <span class="font-bold text-slate-900 dark:text-white tracking-tight">${record.src_ip || record.ip}</span>
+                return `
+                    <div class="flex items-start justify-between py-4 border-b border-gray-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors px-2 -mx-2 rounded-lg group">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
+                                <span class="font-bold text-slate-900 dark:text-white tracking-tight">${record.src_ip || record.ip}</span>
+                            </div>
+                            <div class="text-[11px] text-slate-400 font-medium pl-3.5">
+                                ${formattedDate}
+                            </div>
                         </div>
-                        <div class="text-[11px] text-slate-400 font-medium pl-3.5">
-                            ${formattedDate}
+                        <div class="text-right">
+                            <div class="font-bold text-slate-800 dark:text-slate-200 text-sm">${record.country || 'Unknown'}</div>
+                            <div class="text-xs font-bold text-rose-500 mt-1">${record.count || 1}</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="font-bold text-slate-800 dark:text-slate-200 text-sm">${record.country || 'Unknown'}</div>
-                        <div class="text-xs font-bold text-rose-500 mt-1">${record.count || 1}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+            listContainer.innerHTML = dashboardHtml;
+        }
 
-        listContainer.innerHTML = html;
+        // 2. Fullscreen List (Boxed Style Matching Leaderboard)
+        if (fsListContainer) {
+            const fsHtml = events.map(record => {
+                const date = new Date((record.timestamp || Date.now() / 1000) * 1000);
+                const timeStr = String(date.getHours()).padStart(2, '0') + ':' + 
+                              String(date.getMinutes()).padStart(2, '0') + ':' + 
+                              String(date.getSeconds()).padStart(2, '0');
+                
+                return `
+                <div class="flex items-center justify-between p-2 rounded-lg border bg-slate-800/50 border-slate-700/50 mb-2 last:mb-0 hover:border-slate-600 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col items-center justify-center w-8 h-8 rounded bg-slate-700/50 border border-slate-600/30">
+                            <span class="text-[10px] font-bold text-slate-400">${record.country_code || (record.country ? record.country.substring(0,2).toUpperCase() : 'UNK')}</span>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-slate-200 font-mono tracking-tight">${record.src_ip || record.ip}</div>
+                            <div class="text-[10px] text-slate-400 flex items-center gap-1.5">
+                                <span>${timeStr}</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span>${record.module || 'WAF'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right pl-2">
+                        <div class="text-[10px] font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded inline-block whitespace-nowrap">
+                            ID: ${record.rule_id || record.id || '403'}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            fsListContainer.innerHTML = fsHtml;
+        }
+        
         if (syncIndicator) {
             syncIndicator.style.display = 'none';
         }
+    }
+
+    function updateLeaderboardStats(attacks) {
+        const container = document.getElementById('fs-leaderboard-content');
+        if (!container || !attacks.length) return;
+
+        // Group by IP
+        const counts = {};
+        attacks.forEach(a => {
+            const ip = a.src_ip || a.ip || 'Unknown';
+            if(ip === 'Unknown') return;
+            
+            if (!counts[ip]) {
+                counts[ip] = {
+                    ip: ip,
+                    country: a.country || 'Unknown',
+                    count: 0
+                };
+            }
+            // If API provides 'count', use it, else count individual records
+            counts[ip].count += (parseInt(a.count) || 1);
+        });
+
+        // Sort Top 5
+        const sorted = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        if (sorted.length === 0) {
+            container.innerHTML = '<div class="text-center text-slate-500 text-xs py-2">No active attacks today</div>';
+            return;
+        }
+
+        const html = sorted.map((item, index) => {
+            const rankColor = index === 0 ? 'text-yellow-400' : (index === 1 ? 'text-slate-300' : (index === 2 ? 'text-amber-600' : 'text-slate-500'));
+            const bgClass = index === 0 ? 'bg-yellow-400/10 border-yellow-400/20' : 'bg-slate-800/50 border-slate-700/50';
+            
+            return `
+            <div class="flex items-center justify-between p-2 rounded-lg border ${bgClass} mb-2 last:mb-0">
+                <div class="flex items-center gap-3">
+                    <div class="font-black font-mono ${rankColor} w-4 text-center">${index + 1}</div>
+                    <div>
+                        <div class="text-xs font-bold text-slate-200 font-mono">${item.ip}</div>
+                        <div class="text-[10px] text-slate-400">${item.country}</div>
+                    </div>
+                </div>
+                <div class="px-2 py-0.5 bg-slate-700 rounded text-xs font-bold text-white min-w-[30px] text-center">
+                    ${item.count.toLocaleString()}
+                </div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = html;
     }
 
     // -----------------------------------------------------
@@ -989,6 +1125,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     startClock();
+
+    // -----------------------------------------------------
+    // Fullscreen Panels Logic
+    // -----------------------------------------------------
+    // -----------------------------------------------------
+    // Fullscreen Panels Logic
+    // -----------------------------------------------------
+    window.toggleFsPanel = function(contentId, btn) {
+        const content = document.getElementById(contentId);
+        const icon = btn.querySelector('svg:last-child');
+        
+        // Check if currently closed
+        if (content.classList.contains('max-h-0')) {
+            // OPEN
+            content.classList.remove('max-h-0', 'py-0', 'opacity-0');
+            
+            // Set specific max-heights based on ID
+            if (contentId.includes('attack')) content.classList.add('max-h-[60vh]');
+            else content.classList.add('max-h-[40vh]');
+            
+            content.classList.add('p-4', 'pt-2');
+            
+            // Rotate icon to point up (indicating it can be closed)
+            icon.classList.add('rotate-180');
+        } else {
+            // CLOSE
+            content.classList.remove('max-h-[60vh]', 'max-h-[40vh]', 'p-4', 'pt-2');
+            content.classList.add('max-h-0', 'py-0', 'opacity-0');
+            
+            // Rotate icon to point down (indicating it can be opened)
+            icon.classList.remove('rotate-180');
+        }
+    };
 
     // -----------------------------------------------------
     // Fullscreen Logic

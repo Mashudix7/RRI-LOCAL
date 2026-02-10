@@ -34,10 +34,7 @@ class User_model extends CI_Model {
 
     public function delete($id) {
         $this->db->where('id', $id);
-        return $this->db->update('users', [
-            'is_deleted' => 1,
-            'deleted_at' => date('Y-m-d H:i:s')
-        ]);
+        return $this->db->delete('users');
     }
 
     public function login($username, $password) {

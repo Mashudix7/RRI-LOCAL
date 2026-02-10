@@ -186,27 +186,27 @@ class Admin extends Admin_Controller {
     public function _check_unique_username($username)
     {
         $this->db->where('username', $username);
-        $this->db->where('is_deleted', 0);
+        // Removed is_deleted check to ensure global uniqueness
         $query = $this->db->get('users');
 
         if ($query->num_rows() > 0) {
-            $this->form_validation->set_message(['_check_unique_username' => 'Username sudah digunakan! Silakan gunakan username lain.']);
+            $this->form_validation->set_message(['_check_unique_username' => 'Username sudah digunakan (termasuk akun non-aktif)!']);
             return FALSE;
         }
         return TRUE;
     }
 
     /**
-     * Unique Email Callback (Ignore Deleted)
+     * Unique Email Callback
      */
     public function _check_unique_email($email)
     {
         $this->db->where('email', $email);
-        $this->db->where('is_deleted', 0);
+        // Removed is_deleted check to ensure global uniqueness
         $query = $this->db->get('users');
 
         if ($query->num_rows() > 0) {
-            $this->form_validation->set_message(['_check_unique_email' => 'Email sudah terdaftar! Silakan gunakan email lain.']);
+            $this->form_validation->set_message(['_check_unique_email' => 'Email sudah terdaftar (termasuk akun non-aktif)!']);
             return FALSE;
         }
         return TRUE;
@@ -1006,17 +1006,74 @@ class Admin extends Admin_Controller {
 
     public function ip_export($region)
     {
-        // Cek login & role (redundant with constructor but good practice)
+        // Cek login & role
         if (!$this->session->userdata('logged_in') || $this->session->userdata('role') !== 'admin') {
             redirect('auth/login');
         }
 
         $this->load->model('Ip_model');
-        $this->load->helper('download');
 
         $search = $this->input->get('q');
         $all_ip_data = $this->Ip_model->get_all_grouped_by_network($search);
 
+        // =====================================================
+        // 1. Export Summary (Laporan Rekapitulasi)
+        // =====================================================
+        if ($region === 'summary') {
+            $filename = 'Laporan_Rekapitulasi_IP_Address_' . date('Ymd_His') . '.xls';
+            
+            // Set Headers for Excel Download
+            header("Content-Type: application/vnd.ms-excel");
+            header("Content-Disposition: attachment; filename=\"$filename\"");
+            header("Pragma: no-cache");
+            header("Expires: 0");
+
+            echo '<html>';
+            echo '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>';
+            echo '<body>';
+            echo '<h3>Laporan Rekapitulasi IP Address Data Center</h3>';
+            echo '<table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">';
+            echo '<thead>';
+            echo '<tr style="background-color: #4CAF50; color: white;">';
+            echo '<th style="padding: 10px; text-align: center;">No.</th>';
+            echo '<th style="padding: 10px; text-align: left;">Network IP</th>';
+            echo '<th style="padding: 10px; text-align: left;">Range IP Akhir</th>';
+            echo '<th style="padding: 10px; text-align: left;">Subnet Mask</th>';
+            echo '<th style="padding: 10px; text-align: center;">Prefix</th>';
+            echo '<th style="padding: 10px; text-align: center;">Total IP</th>';
+            echo '<th style="padding: 10px; text-align: left;">Lokasi / Nama Network</th>';
+            echo '<th style="padding: 10px; text-align: left;">Keterangan</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $no = 1;
+            foreach ($all_ip_data as $slug => $net) {
+                $total_rows = count($net['ips']);
+                $is_reserve = (stripos($slug, 'reserve') !== false || stripos($net['name'], 'reserve') !== false);
+                $bg_color = $is_reserve ? 'background-color: #fff9c4;' : ''; // Light yellow for reserve
+
+                echo "<tr style=\"$bg_color\">";
+                echo "<td style=\"padding: 8px; text-align: center;\">{$no}</td>";
+                echo "<td style=\"padding: 8px; font-weight: bold;\">{$net['range_start']}</td>";
+                echo "<td style=\"padding: 8px;\">{$net['range_end']}</td>";
+                echo "<td style=\"padding: 8px;\">" . ($net['subnet_mask'] ?? '255.255.255.0') . "</td>";
+                echo "<td style=\"padding: 8px; text-align: center;\">{$net['cidr']}</td>";
+                echo "<td style=\"padding: 8px; text-align: center;\">{$total_rows}</td>";
+                echo "<td style=\"padding: 8px;\">{$net['name']}</td>";
+                echo "<td style=\"padding: 8px; font-style: italic;\">" . ($is_reserve ? 'Reserved / Cadangan' : 'Data Center / Core') . "</td>";
+                echo "</tr>";
+                $no++;
+            }
+            echo '</tbody>';
+            echo '</table>';
+            echo '</body></html>';
+            return;
+        }
+
+        // =====================================================
+        // 2. Export Specific Region (Detail List)
+        // =====================================================
         if (!isset($all_ip_data[$region])) {
             show_404();
             return;
@@ -1024,30 +1081,65 @@ class Admin extends Admin_Controller {
 
         $network = $all_ip_data[$region];
         $ips = $network['ips'];
+        $filename = 'Laporan_Detail_IP_' . str_replace(' ', '_', $network['name']) . '_' . date('Ymd_His') . '.xls';
 
-        // CSV Header
-        $csv_content = "No,IP Address,Status,Keterangan,Tipe\n";
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
 
-        // CSV Data
+        echo '<html>';
+        echo '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>';
+        echo '<body>';
+        echo "<h3>Laporan Detail IP Address - {$network['name']} ({$network['cidr']})</h3>";
+        
+        // Add Network Info Summary at top
+        echo '<table border="0" style="margin-bottom: 20px; font-family: Arial, sans-serif;">';
+        echo "<tr><td><strong>Network</strong></td><td>: {$network['range_start']} - {$network['range_end']}</td></tr>";
+        $subnet = isset($network['subnet_mask']) ? $network['subnet_mask'] : '-';
+        echo "<tr><td><strong>Subnet/CIDR</strong></td><td>: {$subnet} / {$network['cidr']}</td></tr>";
+        echo "<tr><td><strong>Total IP</strong></td><td>: " . count($ips) . "</td></tr>";
+        echo '</table>';
+
+        echo '<table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">';
+        echo '<thead>';
+        echo '<tr style="background-color: #2196F3; color: white;">';
+        echo '<th style="padding: 10px; text-align: center; width: 50px;">No.</th>';
+        echo '<th style="padding: 10px; text-align: left; width: 150px;">IP Address</th>';
+        echo '<th style="padding: 10px; text-align: left; width: 300px;">Keterangan / Penggunaan</th>';
+        echo '<th style="padding: 10px; text-align: center; width: 100px;">Status</th>';
+        echo '<th style="padding: 10px; text-align: center; width: 100px;">Tipe</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+
         foreach ($ips as $ip) {
-            // Escape content for CSV
-            $keterangan = str_replace('"', '""', $ip['description']);
-            $status = ucfirst($ip['status']);
-            $type = ucfirst($ip['type']);
+            $is_reserve = isset($ip['is_reserve']) && $ip['is_reserve'];
+            $is_gateway = isset($ip['type']) && $ip['type'] === 'gateway';
             
-            $line = [
-                $ip['no'],
-                $ip['ip_address'],
-                $status,
-                '"' . $keterangan . '"',
-                $type
-            ];
+            $bg_color = '';
+            if ($is_reserve) $bg_color = 'background-color: #fff9c4; color: #f57f17;'; // Yellowish
+            elseif ($is_gateway) $bg_color = 'background-color: #e3f2fd; color: #1565c0; font-weight: bold;'; // Bluish
+            elseif ($ip['status'] == 'active') $bg_color = 'background-color: #e8f5e9;'; // Greenish
+
+            $description = htmlspecialchars($ip['description']);
+            if (empty($description)) $description = '-';
             
-            $csv_content .= implode(',', $line) . "\n";
+            $status_label = ucfirst($ip['status']);
+            if ($is_reserve) $status_label = 'Reserved';
+
+            echo "<tr style=\"$bg_color\">";
+            echo "<td style=\"padding: 8px; text-align: center;\">{$ip['no']}</td>";
+            echo "<td style=\"padding: 8px;\">{$ip['ip_address']}</td>";
+            echo "<td style=\"padding: 8px;\">{$description}</td>";
+            echo "<td style=\"padding: 8px; text-align: center;\">{$status_label}</td>";
+            echo "<td style=\"padding: 8px; text-align: center;\">" . ucfirst($ip['type']) . "</td>";
+            echo "</tr>";
         }
 
-        $filename = 'IP_Data_' . $network['name'] . '_' . date('Ymd_His') . '.csv';
-        force_download($filename, $csv_content);
+        echo '</tbody>';
+        echo '</table>';
+        echo '</body></html>';
     }
 
     public function ip_private()

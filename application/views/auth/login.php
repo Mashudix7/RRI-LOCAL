@@ -97,12 +97,8 @@
             <!-- Logo & Title -->
             <div class="text-center mb-8">
                 <a href="<?= base_url() ?>" class="inline-flex items-center gap-3 group mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center 
-                                group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-blue-500/30">
-                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                        </svg>
-                    </div>
+                    <img src="<?= base_url('assets/img/logo_rri.png') ?>" alt="Logo RRI" 
+                         class="w-12 h-12 object-contain rounded-xl group-hover:scale-110 transition-transform duration-300 drop-shadow-2xl">
                     <div class="text-left">
                         <span class="text-2xl font-bold text-white"> CSIRT</span>
                     </div>
@@ -263,10 +259,8 @@
          x-transition:leave-start="opacity-100 transform translate-y-0"
          x-transition:leave-end="opacity-0 transform -translate-y-8"
          class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 text-white rounded-2xl shadow-2xl shadow-slate-500/30 w-full max-w-lg border border-slate-600/30 mx-4">
-        <div class="flex-shrink-0 w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
+        <div class="flex-shrink-0 w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm p-2">
+            <img src="<?= base_url('assets/img/logo-rri.png') ?>" alt="RRI Logo" class="w-full h-full object-contain">
         </div>
         <div class="flex-1 min-w-0">
             <p class="font-bold text-base">Logout Berhasil</p>

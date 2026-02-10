@@ -226,7 +226,7 @@
                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span class="text-blue-700 dark:text-blue-300 text-sm font-semibold tracking-wide">Tim CSIRT Aktif 24/7</span>
+                    <span class="text-blue-700 dark:text-blue-300 text-sm font-semibold tracking-wide">Tim CSIRT Aktif</span>
                 </div>
                 
                 <!-- Main Heading -->

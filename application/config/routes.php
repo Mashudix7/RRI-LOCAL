@@ -139,6 +139,7 @@ $route['admin/vpn-management/store'] = 'vpn_management/store';
 $route['admin/vpn-management/edit/(:any)'] = 'vpn_management/edit/$1';
 $route['admin/vpn-management/update/(:any)'] = 'vpn_management/update/$1';
 $route['admin/vpn-management/delete/(:any)'] = 'vpn_management/delete/$1';
+$route['admin/vpn-management/export'] = 'vpn_management/export';
 $route['admin/reports'] = 'admin/reports';
 $route['admin/audit'] = 'admin/audit_log';
 $route['admin/audit-log'] = 'admin/audit_log';

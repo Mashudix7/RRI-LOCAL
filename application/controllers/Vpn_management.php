@@ -104,4 +104,57 @@ class Vpn_management extends Admin_Controller {
         }
         redirect('admin/vpn-management');
     }
+
+    public function export()
+    {
+        // Check access
+        if (!$this->session->userdata('logged_in')) {
+            redirect('auth/login');
+        }
+
+        $this->load->helper('download');
+        $vpns = $this->Ip_model->get_all_vpns();
+        $filename = 'Laporan_Data_IP_VPN_' . date('Ymd_His') . '.xls';
+
+        // Headers for Excel
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        echo '<html>';
+        echo '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>';
+        echo '<body>';
+        echo '<h3>Laporan Data IP VPN Tunnel & LAN Satker RRI</h3>';
+        echo '<table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;">';
+        echo '<thead>';
+        echo '<tr style="background-color: #4CAF50; color: white;">';
+        echo '<th style="padding: 10px; text-align: center; width: 50px;">No.</th>';
+        echo '<th style="padding: 10px; text-align: left;">Daerah / Unit (Satker)</th>';
+        echo '<th style="padding: 10px; text-align: left;">Network (LAN)</th>';
+        echo '<th style="padding: 10px; text-align: left;">Gateway / IP Tunnel</th>';
+        echo '<th style="padding: 10px; text-align: center;">Status</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+
+        $no = 1;
+        foreach ($vpns as $vpn) {
+            $status_color = ($vpn['status'] === 'online') ? 'color: #2e7d32; font-weight: bold;' : 'color: #c62828;';
+            $status_bg = ($vpn['status'] === 'online') ? 'background-color: #e8f5e9;' : 'background-color: #ffebee;';
+            
+            echo "<tr>";
+            echo "<td style=\"padding: 8px; text-align: center;\">{$no}</td>";
+            echo "<td style=\"padding: 8px;\">{$vpn['satker']}</td>";
+            echo "<td style=\"padding: 8px; font-family: monospace;\">{$vpn['ip_lan']}</td>";
+            echo "<td style=\"padding: 8px; font-family: monospace;\">{$vpn['ip_vpn']}</td>";
+            echo "<td style=\"padding: 8px; text-align: center; {$status_color} {$status_bg}\">" . ucfirst($vpn['status']) . "</td>";
+            echo "</tr>";
+            $no++;
+        }
+
+        echo '</tbody>';
+        echo '</table>';
+        echo '</body></html>';
+    }
 }
