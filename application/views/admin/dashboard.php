@@ -1015,21 +1015,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 2. Fullscreen List (Boxed Style Matching Leaderboard)
         if (fsListContainer) {
-            const fsHtml = events.map(record => {
+            const fsHtml = events.map((record, index) => {
                 const date = new Date((record.timestamp || Date.now() / 1000) * 1000);
                 const timeStr = String(date.getHours()).padStart(2, '0') + ':' + 
                               String(date.getMinutes()).padStart(2, '0') + ':' + 
                               String(date.getSeconds()).padStart(2, '0');
                 
+                const countryCode = record.country_code || (record.country ? record.country.substring(0,2).toUpperCase() : 'UNK');
+
                 return `
                 <div class="flex items-center justify-between p-2 rounded-lg border bg-slate-800/50 border-slate-700/50 mb-2 last:mb-0 hover:border-slate-600 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="flex flex-col items-center justify-center w-8 h-8 rounded bg-slate-700/50 border border-slate-600/30">
-                            <span class="text-[10px] font-bold text-slate-400">${record.country_code || (record.country ? record.country.substring(0,2).toUpperCase() : 'UNK')}</span>
+                            <span class="text-[10px] font-bold text-slate-400">${index + 1}</span>
                         </div>
                         <div class="space-y-0.5">
                             <div class="text-xs font-bold text-slate-200 font-mono tracking-tight">${record.src_ip || record.ip}</div>
                             <div class="text-[10px] text-slate-400 flex items-center gap-1.5">
+                                <span class="text-blue-400 font-bold">${countryCode}</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-600"></span>
                                 <span>${timeStr}</span>
                                 <span class="w-1 h-1 rounded-full bg-slate-600"></span>
                                 <span>${record.module || 'WAF'}</span>
