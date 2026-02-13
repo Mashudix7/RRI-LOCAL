@@ -97,6 +97,7 @@ $route['dashboard'] = 'dashboard/index';
 // Admin Routes (Protected - Admin Only)
 // =====================================================
 $route['admin/dashboard'] = 'admin/index';
+$route['admin/profile'] = 'admin/profile';
 
 $route['admin/users'] = 'admin/users';
 $route['admin/users/(:any)'] = 'admin/users/$1';

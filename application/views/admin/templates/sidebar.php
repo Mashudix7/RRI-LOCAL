@@ -285,8 +285,8 @@
         
         <!-- User Info -->
         <div class="p-4 border-t border-white/10 bg-slate-950/50">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden <?= (empty($user['avatar']) || $user['avatar'] === 'default_avatar.png') ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gray-800' ?>">
+            <a href="<?= base_url('admin/profile') ?>" class="flex items-center gap-3 mb-3 p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden <?= (empty($user['avatar']) || $user['avatar'] === 'default_avatar.png') ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gray-800' ?> ring-2 ring-transparent group-hover:ring-blue-500/50 transition-all">
                     <?php if (!empty($user['avatar']) && $user['avatar'] !== 'default_avatar.png'): ?>
                         <img src="<?= base_url('uploads/avatars/' . $user['avatar']) ?>" alt="User Avatar" class="w-full h-full object-cover" loading="lazy">
                     <?php else: ?>
@@ -294,10 +294,13 @@
                     <?php endif; ?>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white truncate"><?= $user['username'] ?? 'User' ?></p>
+                    <p class="text-sm font-medium text-white truncate group-hover:text-blue-300 transition-colors"><?= $user['username'] ?? 'User' ?></p>
                     <p class="text-xs text-slate-400 truncate"><?= $user['role_name'] ?? ucfirst($user['role'] ?? 'Pengguna') ?></p>
                 </div>
-            </div>
+                <svg class="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
             <a href="<?= base_url('auth/logout') ?>" data-confirm="Apakah Anda yakin ingin keluar dari sistem?" 
                class="flex items-center gap-2 w-full px-3 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

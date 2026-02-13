@@ -213,6 +213,21 @@ class Admin extends Admin_Controller {
     }
 
     /**
+     * Profile Detail
+     */
+    public function profile()
+    {
+        $data['title'] = 'Profil Saya';
+        $data['page'] = 'profile';
+        $data['user'] = $this->_get_user_data();
+
+        $this->load->view('admin/templates/header', $data);
+        $this->load->view('admin/templates/sidebar', $data);
+        $this->load->view('admin/profile', $data);
+        $this->load->view('admin/templates/footer', $data);
+    }
+
+    /**
      * Dashboard (Homepage)
      */
     public function index()

@@ -241,7 +241,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 <body x-data="{ adminDarkMode: localStorage.getItem('adminDarkMode') === 'true', sidebarOpen: false }" 
       x-init="$watch('adminDarkMode', val => { localStorage.setItem('adminDarkMode', val); document.documentElement.classList.toggle('dark', val) })"
-      class="font-sans antialiased bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white transition-colors duration-300"
+      class="font-sans antialiased bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white transition-colors duration-300 h-screen overflow-hidden"
       onload="document.body.classList.add('loaded')">
 
 <!-- Main Layout Container -->
