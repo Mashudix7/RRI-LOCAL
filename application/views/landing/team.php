@@ -173,28 +173,4 @@
     </div>
 </section>
 
-<!-- Join Team CTA -->
-<section class="py-16 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-[#0f172a]/80 dark:to-[#0f172a]/80 relative overflow-hidden" data-aos="fade-in">
-    <!-- Grid pattern -->
-    <div class="absolute inset-0 opacity-10">
-        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <pattern id="join-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                    <path d="M 30 0 L 0 0 0 30" fill="none" stroke="white" stroke-width="0.5"/>
-                </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#join-grid)"/>
-        </svg>
-    </div>
-    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-aos="zoom-in">
-        <h2 class="text-2xl font-bold text-white mb-4">Bergabung dengan Tim Kami?</h2>
-        <p class="text-blue-100 dark:text-gray-400 mb-6">Kami selalu mencari talenta terbaik untuk memperkuat tim CSIRT RRI</p>
-        <a href="<?= base_url('kontak') ?>" 
-           class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 font-medium rounded-lg hover:bg-blue-50 shadow-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-            </svg>
-            Hubungi Kami
-        </a>
-    </div>
 </section>
