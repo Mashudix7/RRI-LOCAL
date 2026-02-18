@@ -34,17 +34,95 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* Navy gradient background */
+        /* Prevent scrolling on login page */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+        }
+
+        /* Deep dark gradient background */
         .navy-gradient {
-            background: linear-gradient(135deg, #060d17 0%, #0a1628 30%, #0d1b2a 60%, #0f172a 100%);
+            background: linear-gradient(135deg, #020617 0%, #050d1a 30%, #0a1628 60%, #0d1b2a 100%);
         }
         
+        /* Cyber Grid (same as landing hero) */
+        .cyber-grid {
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            animation: grid-fade-in 2s ease-out forwards;
+        }
+
+        @keyframes grid-fade-in {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Atmospheric glow */
+        .center-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.05) 30%, transparent 70%);
+            filter: blur(60px);
+            pointer-events: none;
+            z-index: 1;
+            animation: pulse-glow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            to { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+
+        .diagonal-light {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.01) 0%, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .top-spotlight {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 400px;
+            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+            filter: blur(50px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
         /* Glassmorphism */
         .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         /* Gradient text - Blue accent */
@@ -62,7 +140,41 @@
         
         /* Glow effect */
         .glow {
-            box-shadow: 0 0 60px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 80px rgba(59, 130, 246, 0.1);
+        }
+
+        /* ===== ENTRANCE ANIMATIONS ===== */
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .anim-fade-up {
+            opacity: 0;
+            animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .anim-delay-1 { animation-delay: 0.1s; }
+        .anim-delay-2 { animation-delay: 0.25s; }
+        .anim-delay-3 { animation-delay: 0.4s; }
+        .anim-delay-4 { animation-delay: 0.6s; }
+
+        /* Slow rotate for decorative rings */
+        @keyframes slow-spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .ring-rotate {
+            animation: slow-spin 60s linear infinite;
+        }
+        .ring-rotate-reverse {
+            animation: slow-spin 90s linear infinite reverse;
         }
     </style>
 </head>
@@ -71,44 +183,43 @@
          Login Page - Navy Gradient Theme
          ===================================================== -->
     
-    <div class="min-h-screen navy-gradient flex items-center justify-center px-4 py-12 relative overflow-hidden">
-        <!-- Grid Pattern -->
-        <div class="absolute inset-0 opacity-30">
-            <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(59, 130, 246, 0.1)" stroke-width="0.5"/>
-                    </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)"/>
-            </svg>
+    <div class="h-screen navy-gradient flex items-center justify-center px-4 relative overflow-hidden">
+        <!-- Cyber Grid Pattern -->
+        <div class="absolute inset-0 z-0">
+            <div class="w-full h-full cyber-grid"></div>
         </div>
+
+        <!-- Atmospheric Overlays -->
+        <div class="center-glow"></div>
+        <div class="top-spotlight"></div>
+        <div class="diagonal-light"></div>
+        <div class="hero-glow"></div>
         
         <!-- Glow Effects -->
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/5 rounded-full blur-3xl pointer-events-none"></div>
         
-        <!-- Decorative Rings -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/5 rounded-full pointer-events-none"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-white/[0.02] rounded-full pointer-events-none"></div>
+        <!-- Decorative Rings (animated) -->
+        <div class="absolute top-1/2 left-1/2 w-[500px] h-[500px] border border-white/[0.04] rounded-full pointer-events-none ring-rotate"></div>
+        <div class="absolute top-1/2 left-1/2 w-[700px] h-[700px] border border-white/[0.02] rounded-full pointer-events-none ring-rotate-reverse"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border border-white/[0.01] rounded-full pointer-events-none"></div>
         
         <div class="relative z-10 w-full max-w-md">
             <!-- Logo & Title -->
             <div class="text-center mb-8">
-                <a href="<?= base_url() ?>" class="inline-flex items-center gap-3 group mb-6">
+                <a href="<?= base_url() ?>" class="anim-fade-up anim-delay-1 inline-flex items-center gap-3 group mb-6">
                     <img src="<?= base_url('assets/img/logo_rri.png') ?>" alt="Logo RRI" 
                          class="w-12 h-12 object-contain rounded-xl group-hover:scale-110 transition-transform duration-300 drop-shadow-2xl">
                     <div class="text-left">
                         <span class="text-2xl font-bold text-white"> CSIRT</span>
                     </div>
                 </a>
-                <h1 class="text-2xl font-bold text-white mb-2">Selamat Datang</h1>
-                <p class="text-slate-400">Masuk ke dashboard untuk melanjutkan</p>
+                <h1 class="anim-fade-up anim-delay-2 text-2xl font-bold text-white mb-2">Selamat Datang</h1>
+                <p class="anim-fade-up anim-delay-2 text-slate-500">Masuk ke dashboard untuk melanjutkan</p>
             </div>
             
             <!-- Login Card -->
-            <div class="glass rounded-2xl p-8 glow">
+            <div class="anim-fade-up anim-delay-3 glass rounded-2xl p-8 glow">
                 <!-- Error Message -->
                 <?php if (!empty($error)): ?>
                     <div class="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3">
@@ -195,7 +306,7 @@
             </div>
             
             <!-- Back to Home -->
-            <div class="text-center mt-6">
+            <div class="anim-fade-up anim-delay-4 text-center mt-6">
                 <a href="<?= base_url() ?>" class="text-slate-500 hover:text-blue-400 transition-colors text-sm inline-flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

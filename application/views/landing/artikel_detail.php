@@ -18,7 +18,7 @@
                 <span class="px-3 py-1 btn-gradient text-white text-xs font-semibold rounded-full">
                     <?= htmlspecialchars($article['category']) ?>
                 </span>
-                <?php if ($article['is_featured']): ?>
+                <?php if (!empty($article['is_featured'])): ?>
                 <span class="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">
                     PENTING
                 </span>
