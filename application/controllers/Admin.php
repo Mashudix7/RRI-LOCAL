@@ -1542,88 +1542,43 @@ class Admin extends Admin_Controller {
     }
 
     // =====================================================
-    // ZABBIX TRAFFIC API ENDPOINT
+    // ZABBIX TRAFFIC API ENDPOINT (MULTI-HOST MRTG)
     // =====================================================
-    
+
     /**
-     * Traffic Data API Endpoint - SCALABLE VERSION
-     * 
-     * Endpoint untuk mengambil data RX/TX dari Zabbix API.
-     * Menggunakan dynamic lookup berdasarkan nama host & interface.
-     * TIDAK ada hardcoded item IDs!
+     * Traffic Data API Endpoint - MULTI-HOST MRTG VERSION
      * 
      * Actions:
-     * - get: Ambil traffic data RX/TX
-     * - hosts: List semua hosts
-     * - interfaces: List interfaces untuk host tertentu
+     * - get / mrtg : Ambil trend data semua 12 host
      * - clear-cache: Hapus cache
      * 
      * @param string $action Action to perform
-     * @param string $param1 Host name atau Host ID (tergantung action)
-     * @param string $param2 Interface name (untuk action 'get')
      * @return JSON
      */
-    public function traffic($action = 'get', $param1 = null, $param2 = null)
+    public function traffic($action = 'mrtg')
     {
-        // Set header JSON
         header('Content-Type: application/json');
         header('Cache-Control: no-cache, must-revalidate');
 
-        // Load Zabbix Model
         $this->load->model('Zabbix_model');
 
-        // Action: get - Ambil traffic data RX/TX
-        if ($action === 'get') {
-            // param1 = host_name (optional, default dari config)
-            // param2 = interface_name (optional, default dari config)
-            $host_name = $param1 ? urldecode($param1) : null;
-            $interface_name = $param2 ? urldecode($param2) : null;
-
-            // Fetch data dengan dynamic lookup (12 jam, 500 data points)
-            $result = $this->Zabbix_model->get_traffic_data($host_name, $interface_name, 500, 12);
-
+        // Action: mrtg / get - Ambil semua trend data 12 host
+        if ($action === 'mrtg' || $action === 'get') {
+            $result = $this->Zabbix_model->get_mrtg_data();
             echo json_encode($result);
             return;
         }
 
-        // Action: hosts - List semua hosts
-        if ($action === 'hosts') {
-            $hosts = $this->Zabbix_model->get_hosts();
-            echo json_encode(['success' => true, 'data' => $hosts]);
-            return;
-        }
-
-        // Action: interfaces - List interfaces untuk host tertentu
-        if ($action === 'interfaces') {
-            // param1 = host_name
-            if (empty($param1)) {
-                echo json_encode(['success' => false, 'error' => 'Host name required']);
-                return;
-            }
-            
-            // Cari host dulu by name
-            $host = $this->Zabbix_model->find_host_by_name(urldecode($param1));
-            if (empty($host)) {
-                echo json_encode(['success' => false, 'error' => 'Host not found']);
-                return;
-            }
-            
-            $interfaces = $this->Zabbix_model->get_host_interfaces($host['hostid']);
-            echo json_encode(['success' => true, 'host' => $host, 'data' => $interfaces]);
-            return;
-        }
-
-        // Action: clear-cache - Hapus semua cache Zabbix
+        // Action: clear-cache
         if ($action === 'clear-cache') {
             $cleared = $this->Zabbix_model->clear_cache();
             echo json_encode(['success' => true, 'message' => "Cleared {$cleared} cache files"]);
             return;
         }
 
-        // Default: error
         echo json_encode([
             'success' => false,
-            'error' => 'Invalid action. Use: get, hosts, interfaces, clear-cache'
+            'error'   => 'Invalid action. Use: mrtg, clear-cache'
         ]);
     }
 }

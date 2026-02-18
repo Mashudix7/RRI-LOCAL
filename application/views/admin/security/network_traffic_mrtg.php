@@ -1,249 +1,388 @@
-<div class="row">
-    <div class="col-12">
-        <!-- Main Traffic Card -->
-        <div class="card shadow-sm border-0 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
-            <div class="card-header bg-transparent border-bottom border-gray-100 dark:border-slate-700 p-4">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h4 class="card-title mb-1 font-weight-bold text-dark dark:text-white">
-                            <i class="fas fa-network-wired mr-2 text-primary"></i>ISP FIBERNET
-                        </h4>
-                        <p class="text-muted small mb-0">Interfacefibernet</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="badge badge-soft-success p-2 px-3 rounded-pill">
-                            <span class="spinner-grow spinner-grow-sm mr-1" role="status" aria-hidden="true"></span>
-                            LIVE MONITORING
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <!-- Chart Container -->
-                <div id="zabbix-traffic-chart" style="width: 100%; height: 450px;"></div>
-                
-                <!-- Stats Overlay/Legend Table -->
-                <div class="p-4 bg-light dark:bg-slate-900/50 border-top border-gray-100 dark:border-slate-700">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-borderless mb-0 text-center">
-                            <thead class="text-muted small uppercase tracking-wider">
-                                <tr>
-                                    <th class="text-left">Interface / Metric</th>
-                                    <th>Last</th>
-                                    <th>Min</th>
-                                    <th>Avg</th>
-                                    <th>Max</th>
-                                </tr>
-                            </thead>
-                            <tbody class="font-weight-bold">
-                                <tr>
-                                    <td class="text-left d-flex align-items-center">
-                                        <span class="d-inline-block w-3 h-3 rounded mr-2" style="background: #2d8e2d;"></span>
-                                        <span class="dark:text-slate-300">Incoming traffic (RX)</span>
-                                    </td>
-                                    <td id="rx-last" class="text-success">-</td>
-                                    <td id="rx-min">-</td>
-                                    <td id="rx-avg">-</td>
-                                    <td id="rx-max">-</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-left d-flex align-items-center">
-                                        <span class="d-inline-block w-3 h-3 rounded mr-2" style="background: #e64a19;"></span>
-                                        <span class="dark:text-slate-300">Outgoing traffic (TX)</span>
-                                    </td>
-                                    <td id="tx-last" class="text-orange">-</td>
-                                    <td id="tx-min">-</td>
-                                    <td id="tx-avg">-</td>
-                                    <td id="tx-max">-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent p-3 text-center border-top border-gray-100 dark:border-slate-700">
-                <small class="text-muted">
-                    Auto-refreshes every 60 seconds. Last updated: <span id="last-update">Never</span>
-                </small>
-            </div>
-        </div>
+<!-- Network Traffic MRTG - Multi Host Grid -->
+<style>
+    .mrtg-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    @media (max-width: 992px) {
+        .mrtg-grid { grid-template-columns: 1fr; }
+    }
+    .mrtg-card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .mrtg-card-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #333;
+        padding: 8px 12px 2px 12px;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .mrtg-chart-container {
+        width: 100%;
+        height: 220px;
+    }
+    .mrtg-legend {
+        padding: 4px 10px 8px 10px;
+        font-size: 11px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .mrtg-legend-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+        flex-wrap: wrap;
+    }
+    .mrtg-legend-color {
+        width: 14px;
+        height: 4px;
+        flex-shrink: 0;
+    }
+    .mrtg-legend-label {
+        flex: 1;
+        color: #555;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mrtg-legend-stats {
+        display: flex;
+        gap: 8px;
+        color: #333;
+        font-size: 10.5px;
+        flex-shrink: 0;
+    }
+    .mrtg-legend-stats span {
+        white-space: nowrap;
+    }
+    .mrtg-legend-stats .stat-label {
+        color: #999;
+        font-size: 10px;
+    }
+    .mrtg-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        background: #fff;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+    }
+    .mrtg-header-bar h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+    }
+    .mrtg-header-bar .mrtg-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(45,142,45,0.08);
+        color: #2d8e2d;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+    }
+    .mrtg-live .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #2d8e2d;
+        animation: pulse-dot 1.5s infinite;
+    }
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    .mrtg-footer {
+        text-align: center;
+        padding: 10px;
+        font-size: 11px;
+        color: #999;
+    }
+</style>
+
+<div class="mrtg-header-bar">
+    <h4><i class="fas fa-network-wired mr-2 text-primary"></i>Network Traffic MRTG</h4>
+    <div>
+        <span class="mrtg-live"><span class="dot"></span> LIVE MONITORING</span>
+        <span class="ml-3 text-muted" style="font-size:11px;">Updated: <span id="mrtg-last-update">-</span></span>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<div class="mrtg-grid" id="mrtg-grid">
+    <!-- Cards generated by JS -->
+</div>
 
-<style>
-    .dark .card { background: #1e293b; color: #f8fafc; }
-    .dark .text-muted { color: #94a3b8 !important; }
-    .text-orange { color: #e64a19; }
-    .badge-soft-success {
-        background-color: rgba(45, 142, 45, 0.1);
-        color: #2d8e2d;
-        font-weight: 600;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-    }
-    .spinner-grow-sm { width: 0.7rem; height: 0.7rem; }
-    .w-3 { width: 0.75rem; }
-    .h-3 { height: 0.75rem; }
-</style>
+<div class="mrtg-footer">
+    Auto-refreshes every 60 seconds
+</div>
+
+<!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const chartDom = document.getElementById('zabbix-traffic-chart');
-    const myChart = echarts.init(chartDom);
-    
-    // Konfigurasi Chart Gaya MRTG Premium
-    const option = {
-        grid: {
-            top: '10%',
-            left: '3%',
-            right: '4%',
-            bottom: '5%',
-            containLabel: true
-        },
-        tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } },
-            formatter: function(params) {
-                let res = `<div style="font-weight:bold;margin-bottom:5px;">${params[0].axisValueLabel}</div>`;
-                params.forEach(item => {
-                    res += `<div style="display:flex;justify-content:space-between;gap:20px;">
-                                <span>${item.marker} ${item.seriesName}:</span>
-                                <span style="font-weight:bold;">${formatBytes(item.value)}</span>
-                            </div>`;
-                });
-                return res;
-            }
-        },
-        legend: { show: false },
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: [],
-            axisLine: { lineStyle: { color: '#ddd' } },
-            axisLabel: { color: '#999', fontSize: 10 }
-        },
-        yAxis: {
-            type: 'value',
-            axisLabel: {
-                formatter: function(value) { return formatBytes(value, 0); },
-                color: '#999',
-                fontSize: 10
-            },
-            splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }
-        },
-        series: [
-            {
-                name: 'Received (RX)',
-                type: 'line',
-                data: [],
-                smooth: true,
-                symbol: 'none',
-                areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(45, 142, 45, 0.8)' },
-                        { offset: 1, color: 'rgba(45, 142, 45, 0.1)' }
-                    ])
-                },
-                lineStyle: { color: '#2d8e2d', width: 2 },
-                itemStyle: { color: '#2d8e2d' }
-            },
-            {
-                name: 'Sent (TX)',
-                type: 'line',
-                data: [],
-                smooth: true,
-                symbol: 'none',
-                areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(230, 74, 25, 0.8)' },
-                        { offset: 1, color: 'rgba(230, 74, 25, 0.1)' }
-                    ])
-                },
-                lineStyle: { color: '#e64a19', width: 2 },
-                itemStyle: { color: '#e64a19' }
-            }
-        ]
-    };
 
-    myChart.setOption(option);
+    // =====================================================
+    // Host config matching the PHP model order exactly
+    // =====================================================
+    const HOSTS = [
+        { label: 'ASTINET',                              inId: '66918',  outId: '66942'  },
+        { label: 'FIBERNET GEDUNG MBC PUSBANGKOM 300Mbps', inId: '373160', outId: '373193' },
+        { label: 'FIBERNET',                             inId: '407210', outId: '407255' },
+        { label: 'FIBERNET BINA PROFESI',                inId: '374148', outId: '374166' },
+        { label: 'ASTINET TUNNEL',                       inId: '374437', outId: '374458' },
+        { label: 'FIBERNET PUSBANGKOM',                  inId: '406908', outId: '406956' },
+        { label: 'FIBERNET DC DPOK',                     inId: '413803', outId: '413821' },
+        { label: 'FIBERNET SPI',                         inId: '423530', outId: '423587' },
+        { label: 'INTERNET DC JKT (Fibernet)',           inId: '41470',  outId: '41536'  },
+        { label: 'FIBERNET PEMANCAR KEBAYORAN',          inId: '407499', outId: '407604' },
+        { label: 'INTERNET RRI KANTOR PUSAT (Fibernet)', inId: '370159', outId: '370237' },
+        { label: 'FIBERNET DC PDN',                      inId: '369924', outId: '370002' }
+    ];
 
-    // Function untuk format bytes ke Mbps/Gbps
-    function formatBytes(bytes, decimals = 2) {
-        if (bytes === 0) return '0 bps';
-        const k = 1000;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['bps', 'kbps', 'Mbps', 'Gbps', 'Tbps'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    const charts = [];   // ECharts instances
+    const grid = document.getElementById('mrtg-grid');
+
+    // =====================================================
+    // Build card DOM for each host
+    // =====================================================
+    HOSTS.forEach((host, idx) => {
+        const card = document.createElement('div');
+        card.className = 'mrtg-card';
+        card.id = 'mrtg-card-' + idx;
+        card.innerHTML = `
+            <div class="mrtg-card-title">${host.label}</div>
+            <div class="mrtg-chart-container" id="chart-${idx}"></div>
+            <div class="mrtg-legend" id="legend-${idx}">
+                <div class="mrtg-legend-row">
+                    <div class="mrtg-legend-color" style="background:#e64a19;"></div>
+                    <span class="mrtg-legend-label" id="out-label-${idx}">Loading...</span>
+                    <div class="mrtg-legend-stats">
+                        <span><span class="stat-label">[avg]</span> <span id="out-avg-${idx}">-</span></span>
+                        <span><span class="stat-label">min</span> <span id="out-min-${idx}">-</span></span>
+                        <span><span class="stat-label">avg</span> <span id="out-tavg-${idx}">-</span></span>
+                        <span><span class="stat-label">max</span> <span id="out-max-${idx}">-</span></span>
+                    </div>
+                </div>
+                <div class="mrtg-legend-row">
+                    <div class="mrtg-legend-color" style="background:#2d8e2d;"></div>
+                    <span class="mrtg-legend-label" id="in-label-${idx}">Loading...</span>
+                    <div class="mrtg-legend-stats">
+                        <span><span class="stat-label">[avg]</span> <span id="in-avg-${idx}">-</span></span>
+                        <span><span class="stat-label">min</span> <span id="in-min-${idx}">-</span></span>
+                        <span><span class="stat-label">avg</span> <span id="in-tavg-${idx}">-</span></span>
+                        <span><span class="stat-label">max</span> <span id="in-max-${idx}">-</span></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+
+        // Initialize ECharts instance
+        const chartDom = document.getElementById('chart-' + idx);
+        const chart = echarts.init(chartDom);
+        charts.push(chart);
+        chart.setOption(getChartOption());
+    });
+
+    // =====================================================
+    // Chart option template (MRTG style)
+    // =====================================================
+    function getChartOption() {
+        return {
+            grid: {
+                top: 10, left: 50, right: 20, bottom: 40
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } },
+                formatter: function(params) {
+                    let res = '<div style="font-weight:bold;margin-bottom:4px;">' + params[0].axisValueLabel + '</div>';
+                    params.forEach(item => {
+                        res += '<div style="display:flex;justify-content:space-between;gap:16px;">'
+                            + '<span>' + item.marker + ' ' + item.seriesName + ':</span>'
+                            + '<span style="font-weight:bold;">' + formatBits(item.value) + '</span>'
+                            + '</div>';
+                    });
+                    return res;
+                }
+            },
+            legend: { show: false },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: [],
+                axisLine: { lineStyle: { color: '#ccc' } },
+                axisLabel: {
+                    color: '#999', fontSize: 9,
+                    rotate: 45,
+                    formatter: function(v) {
+                        // Show shorter time
+                        return v;
+                    }
+                },
+                axisTick: { show: false }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: {
+                    formatter: function(v) { return formatBits(v, 0); },
+                    color: '#999', fontSize: 9
+                },
+                splitLine: { lineStyle: { type: 'dashed', color: '#eee' } },
+                axisLine: { show: false },
+                axisTick: { show: false }
+            },
+            series: [
+                {
+                    name: 'Bits sent',
+                    type: 'line',
+                    data: [],
+                    smooth: false,
+                    symbol: 'none',
+                    lineStyle: { color: '#e64a19', width: 1 },
+                    itemStyle: { color: '#e64a19' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(230,74,25,0.7)' },
+                            { offset: 1, color: 'rgba(230,74,25,0.05)' }
+                        ])
+                    },
+                    z: 2
+                },
+                {
+                    name: 'Bits received',
+                    type: 'line',
+                    data: [],
+                    smooth: false,
+                    symbol: 'none',
+                    lineStyle: { color: '#2d8e2d', width: 1 },
+                    itemStyle: { color: '#2d8e2d' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(45,142,45,0.7)' },
+                            { offset: 1, color: 'rgba(45,142,45,0.05)' }
+                        ])
+                    },
+                    z: 1
+                }
+            ]
+        };
     }
 
-    // Function Fetch Data
+    // =====================================================
+    // Format bits to human readable
+    // =====================================================
+    function formatBits(value, decimals) {
+        if (decimals === undefined) decimals = 2;
+        if (!value || value === 0) return '0 bps';
+        const abs = Math.abs(value);
+        const units = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
+        const k = 1000;
+        const i = Math.floor(Math.log(abs) / Math.log(k));
+        const idx = Math.min(i, units.length - 1);
+        return (value / Math.pow(k, idx)).toFixed(decimals) + ' ' + units[idx];
+    }
+
+    // =====================================================
+    // Fetch data from backend
+    // =====================================================
     async function fetchData() {
         try {
-            // Dynamic base path calculation for local/production consistency
             const basePath = window.location.pathname.split('/admin/')[0];
-            // Use default endpoint - will use ZABBIX_DEFAULT_HOST & ZABBIX_DEFAULT_INTERFACE from .env
-            const fetchUrl = basePath + '/admin/traffic/get';
-            
+            const fetchUrl = basePath + '/admin/traffic/mrtg';
+
             const response = await fetch(fetchUrl);
             const data = await response.json();
-            console.log('Zabbix API Response:', data);
-            
-            if (data.success) {
-                const rx = data.rx || [];
-                const tx = data.tx || [];
-                
-                // Urutkan berdasarkan clock (takut nyampur)
-                rx.sort((a, b) => a.clock - b.clock);
-                tx.sort((a, b) => a.clock - b.clock);
+            console.log('MRTG Data:', data);
 
-                const timestamps = rx.map(d => {
-                    const date = new Date(d.clock * 1000);
-                    return date.getHours().toString().padStart(2, '0') + ':' + 
-                           date.getMinutes().toString().padStart(2, '0');
+            if (data.success && data.hosts) {
+                data.hosts.forEach((host, idx) => {
+                    if (idx >= HOSTS.length) return;
+
+                    // Prepare time labels & data arrays
+                    const inData  = host.in_data || [];
+                    const outData = host.out_data || [];
+
+                    // Build aligned timestamps from IN data (or OUT if IN is empty)
+                    const sourceData = inData.length >= outData.length ? inData : outData;
+                    const timestamps = sourceData.map(d => {
+                        const date = new Date(d.clock * 1000);
+                        const h = date.getHours().toString().padStart(2, '0');
+                        const m = date.getMinutes().toString().padStart(2, '0');
+                        // Include AM/PM style
+                        const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
+                        let hour12 = date.getHours() % 12;
+                        if (hour12 === 0) hour12 = 12;
+                        return hour12 + ':' + m + ' ' + ampm;
+                    });
+
+                    const inValues  = inData.map(d => d.value_avg);
+                    const outValues = outData.map(d => d.value_avg);
+
+                    // Update chart
+                    charts[idx].setOption({
+                        xAxis: { data: timestamps },
+                        series: [
+                            { data: outValues },  // Sent (red/orange) - OUT
+                            { data: inValues }     // Received (green) - IN
+                        ]
+                    });
+
+                    // Update legend labels (interface names from API)
+                    const outLabel = document.getElementById('out-label-' + idx);
+                    const inLabel  = document.getElementById('in-label-' + idx);
+                    if (outLabel) outLabel.textContent = host.out_name || 'Bits sent';
+                    if (inLabel)  inLabel.textContent  = host.in_name  || 'Bits received';
+
+                    // Update stats (OUT = sent, IN = received)
+                    updateLegendStats('out', idx, host.out_stats);
+                    updateLegendStats('in',  idx, host.in_stats);
                 });
 
-                const rxValues = rx.map(d => d.value);
-                const txValues = tx.map(d => d.value);
-
-                myChart.setOption({
-                    xAxis: { data: timestamps },
-                    series: [
-                        { data: rxValues },
-                        { data: txValues }
-                    ]
-                });
-
-                // Update Stats Table
-                updateStats('rx', rxValues);
-                updateStats('tx', txValues);
-                
-                document.getElementById('last-update').innerText = new Date().toLocaleTimeString();
+                document.getElementById('mrtg-last-update').textContent = new Date().toLocaleTimeString('id-ID');
             }
         } catch (error) {
-            console.error('Error fetching Zabbix data:', error);
+            console.error('Error fetching MRTG data:', error);
         }
     }
 
-    function updateStats(prefix, values) {
-        if (!values.length) return;
-        const last = values[values.length - 1];
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    function updateLegendStats(prefix, idx, stats) {
+        if (!stats) return;
+        const el = (id) => document.getElementById(id);
+        const avg  = el(prefix + '-avg-'  + idx);
+        const min  = el(prefix + '-min-'  + idx);
+        const tavg = el(prefix + '-tavg-' + idx);
+        const max  = el(prefix + '-max-'  + idx);
 
-        document.getElementById(`${prefix}-last`).innerText = formatBytes(last);
-        document.getElementById(`${prefix}-min`).innerText = formatBytes(min);
-        document.getElementById(`${prefix}-avg`).innerText = formatBytes(avg);
-        document.getElementById(`${prefix}-max`).innerText = formatBytes(max);
+        if (avg)  avg.textContent  = formatBits(stats.last);
+        if (min)  min.textContent  = formatBits(stats.min);
+        if (tavg) tavg.textContent = formatBits(stats.avg);
+        if (max)  max.textContent  = formatBits(stats.max);
     }
 
+    // =====================================================
+    // Init & Auto Refresh
+    // =====================================================
     fetchData();
-    setInterval(fetchData, 60000); // 1 Menit Auto Refresh
+    setInterval(fetchData, 60000);
 
-    window.addEventListener('resize', () => myChart.resize());
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        charts.forEach(c => c.resize());
+    });
 });
 </script>
