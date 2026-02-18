@@ -204,7 +204,7 @@
     </div>
 
     <div class="mrtg-footer">
-        Data source: Zabbix API &nbsp;|&nbsp; Trend data today (00:00 – now) &nbsp;|&nbsp; 1 point = 1-hour average
+        Data source: Zabbix API &nbsp;|&nbsp; Today so far (00:00 – now) &nbsp;|&nbsp; 1 point = 1-hour average
     </div>
 
 </div>
@@ -220,14 +220,14 @@
     // =====================================================
     const HOSTS = [
         { label: 'ASTINET',                      port: 'ether1-Astinet-Telkom-200Mbps (PORT 1)',  inId: '66918',  outId: '66942'  },
-        { label: 'ASTINET TUNNEL',               port: 'ether2 (LINK 2)',                          inId: '374437', outId: '374458' },
-        { label: 'FIBERNET GEDUNG MBC PUSBANGKOM', port: 'ether3-SumberTricom (PORT 3)',           inId: '373160', outId: '373193' },
-        { label: 'FIBERNET PUSBANGKOM',          port: 'ether2-Data-Internet (PORT 2)',            inId: '406908', outId: '406956' },
+        { label: 'ASTINET TUNNEL',               port: 'ether4-ASTINET-Utama-50Mbps (PORT 4)',                    inId: '333371', outId: '333722' },
+        { label: 'FIBERNET GEDUNG MBC PUSBANGKOM', port: 'ether1-ISP-Fibernet (PORT 1)',             inId: '424087', outId: '424090' },
+        { label: 'FIBERNET PUSBANGKOM',          port: 'ether1-Modem-Fibernet (PORT 1 - Sumber Internet 80Mbps)', inId: '373158', outId: '373191' },
         { label: 'FIBERNET',                     port: 'sfp-sfpplus1-fibernet (fibernet)',         inId: '423546', outId: '423603' },
-        { label: 'FIBERNET BINA PROFESI',        port: 'ether2-Kepsta-Pro3 (PORT 2)',              inId: '374148', outId: '374166' },
+        { label: 'FIBERNET BINA PROFESI',        port: 'ether8-Router-Fibernet (PORT 8 - Sumber Internet Fiber)', inId: '424984', outId: '425005' },
         { label: 'FIBERNET DC DPOK',             port: 'ether6-DC-Depok (PORT 6)',                 inId: '423534', outId: '423591' },
         { label: 'FIBERNET SPI',                 port: 'ether1-Sumber-Fibernet (PORT 1)',          inId: '413801', outId: '413819' },
-        { label: 'INTERNET DC JKT',              port: 'ether1-MK-Core-Operasional (PORT 1)',      inId: '41470',  outId: '41536'  },
+        { label: 'INTERNET DC JKT',              port: 'ether1-DC-Jakarta (PORT 1)',               inId: '423529', outId: '423586' },
         { label: 'FIBERNET PEMANCAR KEBAYORAN',  port: 'ether1 (LINK 1)',                          inId: '374436', outId: '374457' },
         { label: 'INTERNET RRI KANTOR PUSAT',    port: 'sfp-sfpplus2-Fortigate-KTRPusat',         inId: '423545', outId: '423602' },
         { label: 'FIBERNET DC PDN',              port: 'ether2-DC-PDN-Serpong',                    inId: '423530', outId: '423587' }
@@ -261,7 +261,7 @@
                     <div class="mrtg-legend-swatch" style="background:${COLOR_OUT};"></div>
                     <span class="mrtg-legend-name" id="out-name-${idx}">Bits sent</span>
                     <div class="mrtg-legend-stats">
-                        <span class="mrtg-stat-item"><span class="mrtg-stat-label">[avg]</span>&nbsp;<span class="mrtg-stat-val" id="out-last-${idx}">—</span></span>
+                        <span class="mrtg-stat-item"><span class="mrtg-stat-label">last</span>&nbsp;<span class="mrtg-stat-val" id="out-last-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">min</span>&nbsp;<span class="mrtg-stat-val" id="out-min-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">avg</span>&nbsp;<span class="mrtg-stat-val" id="out-avg-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">max</span>&nbsp;<span class="mrtg-stat-val" id="out-max-${idx}">—</span></span>
@@ -272,7 +272,7 @@
                     <div class="mrtg-legend-swatch" style="background:${COLOR_IN};"></div>
                     <span class="mrtg-legend-name" id="in-name-${idx}">Bits received</span>
                     <div class="mrtg-legend-stats">
-                        <span class="mrtg-stat-item"><span class="mrtg-stat-label">[avg]</span>&nbsp;<span class="mrtg-stat-val" id="in-last-${idx}">—</span></span>
+                        <span class="mrtg-stat-item"><span class="mrtg-stat-label">last</span>&nbsp;<span class="mrtg-stat-val" id="in-last-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">min</span>&nbsp;<span class="mrtg-stat-val" id="in-min-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">avg</span>&nbsp;<span class="mrtg-stat-val" id="in-avg-${idx}">—</span></span>
                         <span class="mrtg-stat-item"><span class="mrtg-stat-label">max</span>&nbsp;<span class="mrtg-stat-val" id="in-max-${idx}">—</span></span>
@@ -441,6 +441,17 @@
                 // Value arrays (raw bps)
                 const inVals  = inData.map(function(d)  { return d.value_avg; });
                 const outVals = outData.map(function(d) { return d.value_avg; });
+
+                // Tambahkan titik "now" real-time di ujung grafik
+                // (Zabbix trend.get hanya punya data jam yang sudah selesai,
+                //  jadi kita append lastvalue dari item.get sebagai titik sekarang)
+                const nowLabel = (function() {
+                    const d = new Date();
+                    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+                })();
+                labels.push(nowLabel);
+                outVals.push(host.out_last || 0);
+                inVals.push(host.in_last   || 0);
 
                 // Update chart
                 charts[idx].data.labels           = labels;

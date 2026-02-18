@@ -38,21 +38,21 @@ class Zabbix_model extends CI_Model {
         ],
         [
             'label' => 'ASTINET TUNNEL',
-            'port'  => 'ether2 (LINK 2)',
-            'in'    => '374437',
-            'out'   => '374458'
+            'port'  => 'ether4-ASTINET-Utama-50Mbps (PORT 4)',
+            'in'    => '333371',
+            'out'   => '333722'
         ],
         [
             'label' => 'FIBERNET GEDUNG MBC PUSBANGKOM',
-            'port'  => 'ether3-SumberTricom (PORT 3)',
-            'in'    => '373160',
-            'out'   => '373193'
+            'port'  => 'ether1-ISP-Fibernet (PORT 1)',
+            'in'    => '424087',
+            'out'   => '424090'
         ],
         [
             'label' => 'FIBERNET PUSBANGKOM',
-            'port'  => 'ether2-Data-Internet (PORT 2)',
-            'in'    => '406908',
-            'out'   => '406956'
+            'port'  => 'ether1-Modem-Fibernet (PORT 1 - Sumber Internet 80Mbps)',
+            'in'    => '373158',
+            'out'   => '373191'
         ],
         [
             'label' => 'FIBERNET',
@@ -62,9 +62,9 @@ class Zabbix_model extends CI_Model {
         ],
         [
             'label' => 'FIBERNET BINA PROFESI',
-            'port'  => 'ether2-Kepsta-Pro3 (PORT 2)',
-            'in'    => '374148',
-            'out'   => '374166'
+            'port'  => 'ether8-Router-Fibernet (PORT 8 - Sumber Internet Fiber)',
+            'in'    => '424984',
+            'out'   => '425005'
         ],
         [
             'label' => 'FIBERNET DC DPOK',
@@ -80,9 +80,9 @@ class Zabbix_model extends CI_Model {
         ],
         [
             'label' => 'INTERNET DC JKT',
-            'port'  => 'ether1-MK-Core-Operasional (PORT 1)',
-            'in'    => '41470',
-            'out'   => '41536'
+            'port'  => 'ether1-DC-Jakarta (PORT 1)',
+            'in'    => '423529',
+            'out'   => '423586'
         ],
         [
             'label' => 'FIBERNET PEMANCAR KEBAYORAN',
@@ -187,17 +187,19 @@ class Zabbix_model extends CI_Model {
      */
     public function get_trend_data($time_from = null, $time_till = null)
     {
-        // Default: hari ini (UTC+7)
+        // Default: "Today so far" — dari 00:00 WIB sampai sekarang (real-time)
         if (!$time_from) {
-            // Start of today WIB (UTC+7)
-            $now = time();
+            $now        = time();
             $wib_offset = 7 * 3600;
+            // Awal hari ini dalam UTC
             $today_start_utc = strtotime(date('Y-m-d', $now + $wib_offset) . ' 00:00:00') - $wib_offset;
-            $time_from = $today_start_utc;
-            $time_till = $today_start_utc + 86399;
+            $time_from  = $today_start_utc;
+            $time_till  = $now; // "now" — bukan akhir hari
         }
 
-        $cache_key = 'zabbix_mrtg_trend_' . $time_from;
+        // Cache key: gabung time_from + time_till dibulatkan per 5 menit
+        $till_bucket = (int)($time_till / 300) * 300;
+        $cache_key   = 'zabbix_mrtg_trend_' . $time_from . '_' . $till_bucket;
         $cached = $this->_get_cache($cache_key);
         if ($cached !== false) {
             return $cached;
@@ -231,8 +233,8 @@ class Zabbix_model extends CI_Model {
                     'value_max' => (float) $row['value_max']
                 ];
             }
-            // Cache 60 seconds for live-ish data
-            $this->_save_cache($cache_key, $grouped, 60);
+            // Cache 5 menit (300 detik) — sesuai bucket di cache key
+            $this->_save_cache($cache_key, $grouped, 300);
             return $grouped;
         }
 
