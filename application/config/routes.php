@@ -149,6 +149,7 @@ $route['admin/audit'] = 'admin/audit_log';
 $route['admin/audit-log'] = 'admin/audit_log';
 
 // Zabbix Traffic API Routes
+$route['admin/traffic/mrtg'] = 'admin/traffic/mrtg';
 $route['admin/traffic/get/(:any)/(:any)'] = 'admin/traffic/get/$1/$2';
 $route['admin/traffic/get/(:any)'] = 'admin/traffic/get/$1';
 $route['admin/traffic/get'] = 'admin/traffic/get';

@@ -16,7 +16,20 @@ class Infrastructure extends Admin_Controller {
         $data['title'] = 'Traffic MRTG';
         $data['page'] = 'network_traffic_mrtg';
         
-        $this->render_admin('admin/infrastructure/network/network_traffic_mrtg', $data);
+        $this->render_admin('admin/security/network_traffic_mrtg', $data);
+    }
+
+    /**
+     * JSON endpoint: /admin/infrastructure/mrtg_data
+     * Returns Zabbix MRTG data for the frontend chart view.
+     */
+    public function mrtg_data()
+    {
+        $this->load->model('Zabbix_model');
+        $data = $this->Zabbix_model->get_mrtg_data();
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 
     public function network_traffic_ap()

@@ -32,63 +32,75 @@ class Zabbix_model extends CI_Model {
     private $hosts = [
         [
             'label' => 'ASTINET',
+            'port'  => 'ether1-Astinet-Telkom-200Mbps (PORT 1)',
             'in'    => '66918',
             'out'   => '66942'
         ],
         [
-            'label' => 'FIBERNET GEDUNG MBC PUSBANGKOM 300Mbps',
-            'in'    => '373160',
-            'out'   => '373193'
-        ],
-        [
-            'label' => 'FIBERNET',
-            'in'    => '407210',
-            'out'   => '407255'
-        ],
-        [
-            'label' => 'FIBERNET BINA PROFESI',
-            'in'    => '374148',
-            'out'   => '374166'
-        ],
-        [
             'label' => 'ASTINET TUNNEL',
+            'port'  => 'ether2 (LINK 2)',
             'in'    => '374437',
             'out'   => '374458'
         ],
         [
+            'label' => 'FIBERNET GEDUNG MBC PUSBANGKOM',
+            'port'  => 'ether3-SumberTricom (PORT 3)',
+            'in'    => '373160',
+            'out'   => '373193'
+        ],
+        [
             'label' => 'FIBERNET PUSBANGKOM',
+            'port'  => 'ether2-Data-Internet (PORT 2)',
             'in'    => '406908',
             'out'   => '406956'
         ],
         [
+            'label' => 'FIBERNET',
+            'port'  => 'sfp-sfpplus1-fibernet (fibernet)',
+            'in'    => '423546',
+            'out'   => '423603'
+        ],
+        [
+            'label' => 'FIBERNET BINA PROFESI',
+            'port'  => 'ether2-Kepsta-Pro3 (PORT 2)',
+            'in'    => '374148',
+            'out'   => '374166'
+        ],
+        [
             'label' => 'FIBERNET DC DPOK',
-            'in'    => '413803',
-            'out'   => '413821'
+            'port'  => 'ether6-DC-Depok (PORT 6)',
+            'in'    => '423534',
+            'out'   => '423591'
         ],
         [
             'label' => 'FIBERNET SPI',
-            'in'    => '423530',
-            'out'   => '423587'
+            'port'  => 'ether1-Sumber-Fibernet (PORT 1)',
+            'in'    => '413801',
+            'out'   => '413819'
         ],
         [
-            'label' => 'INTERNET DC JKT (Fibernet)',
+            'label' => 'INTERNET DC JKT',
+            'port'  => 'ether1-MK-Core-Operasional (PORT 1)',
             'in'    => '41470',
             'out'   => '41536'
         ],
         [
             'label' => 'FIBERNET PEMANCAR KEBAYORAN',
-            'in'    => '407499',
-            'out'   => '407604'
+            'port'  => 'ether1 (LINK 1)',
+            'in'    => '374436',
+            'out'   => '374457'
         ],
         [
-            'label' => 'INTERNET RRI KANTOR PUSAT (Fibernet)',
-            'in'    => '370159',
-            'out'   => '370237'
+            'label' => 'INTERNET RRI KANTOR PUSAT',
+            'port'  => 'sfp-sfpplus2-Fortigate-KTRPusat',
+            'in'    => '423545',
+            'out'   => '423602'
         ],
         [
             'label' => 'FIBERNET DC PDN',
-            'in'    => '369924',
-            'out'   => '370002'
+            'port'  => 'ether2-DC-PDN-Serpong',
+            'in'    => '423530',
+            'out'   => '423587'
         ]
     ];
 
@@ -146,7 +158,7 @@ class Zabbix_model extends CI_Model {
             'method'  => 'item.get',
             'params'  => [
                 'itemids'     => $this->_get_all_itemids(),
-                'output'      => ['itemid', 'name', 'key_', 'units'],
+                'output'      => ['itemid', 'name', 'key_', 'lastvalue', 'units'],
                 'selectHosts' => ['host']
             ],
             'auth' => $this->auth_token,
@@ -198,7 +210,7 @@ class Zabbix_model extends CI_Model {
                 'itemids'   => $this->_get_all_itemids(),
                 'time_from' => $time_from,
                 'time_till' => $time_till,
-                'output'    => ['itemid', 'clock', 'value_avg', 'value_max'],
+                'output'    => ['itemid', 'clock', 'num', 'value_min', 'value_avg', 'value_max'],
                 'sortfield' => 'clock',
                 'sortorder' => 'ASC'
             ],
@@ -214,6 +226,7 @@ class Zabbix_model extends CI_Model {
             foreach ($response['result'] as $row) {
                 $grouped[$row['itemid']][] = [
                     'clock'     => (int) $row['clock'],
+                    'value_min' => (float) $row['value_min'],
                     'value_avg' => (float) $row['value_avg'],
                     'value_max' => (float) $row['value_max']
                 ];
@@ -256,16 +269,19 @@ class Zabbix_model extends CI_Model {
             $out_stats = $this->_calc_stats($out_trend);
 
             $result[] = [
-                'label'    => $host['label'],
-                'in_id'    => $in_id,
-                'out_id'   => $out_id,
-                'in_name'  => $in_item ? $in_item['name'] : 'Unknown',
-                'out_name' => $out_item ? $out_item['name'] : 'Unknown',
-                'in_host'  => ($in_item && !empty($in_item['hosts'])) ? $in_item['hosts'][0]['host'] : 'Unknown',
-                'in_data'  => $in_trend,
-                'out_data' => $out_trend,
-                'in_stats' => $in_stats,
-                'out_stats'=> $out_stats
+                'label'     => $host['label'],
+                'port'      => $host['port'],
+                'in_id'     => $in_id,
+                'out_id'    => $out_id,
+                'in_name'   => $in_item ? $in_item['name'] : 'Unknown',
+                'out_name'  => $out_item ? $out_item['name'] : 'Unknown',
+                'in_host'   => ($in_item && !empty($in_item['hosts'])) ? $in_item['hosts'][0]['host'] : 'Unknown',
+                'in_last'   => $in_item ? (float)$in_item['lastvalue'] : 0,
+                'out_last'  => $out_item ? (float)$out_item['lastvalue'] : 0,
+                'in_data'   => $in_trend,
+                'out_data'  => $out_trend,
+                'in_stats'  => $in_stats,
+                'out_stats' => $out_stats
             ];
         }
 
@@ -286,11 +302,12 @@ class Zabbix_model extends CI_Model {
         }
 
         $avgs = array_column($trend_data, 'value_avg');
+        $mins = array_column($trend_data, 'value_min');
         $maxs = array_column($trend_data, 'value_max');
 
         return [
             'last' => end($avgs),
-            'min'  => min($avgs),
+            'min'  => min($mins),
             'avg'  => array_sum($avgs) / count($avgs),
             'max'  => max($maxs)
         ];
