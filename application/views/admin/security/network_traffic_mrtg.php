@@ -472,11 +472,13 @@
                 const inVals = inData.map(d => d.value_avg);
                 const outVals = outData.map(d => d.value_avg);
 
-                // Add "Now" Point
-                const nowLabel = (function() {
-                        const d = new Date();
-                        return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-                })();
+                // Add "Now" Point (Force WIB)
+                const nowLabel = new Date().toLocaleTimeString('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).replace('.', ':');
                 categories.push(nowLabel);
                 inVals.push(host.in_last || 0);
                 outVals.push(host.out_last || 0);
@@ -527,10 +529,12 @@
     }
 
     function clockToLabel(clock) {
-        const d = new Date(clock * 1000);
-        const h = d.getHours().toString().padStart(2, '0');
-        const m = d.getMinutes().toString().padStart(2, '0');
-        return h + ':' + m;
+        return new Date(clock * 1000).toLocaleTimeString('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace('.', ':');
     }
 
     function setText(id, val) {

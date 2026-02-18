@@ -189,12 +189,19 @@ class Zabbix_model extends CI_Model {
     {
         // Default: "Today so far" — dari 00:00 WIB sampai sekarang (real-time)
         if (!$time_from) {
-            $now        = time();
-            $wib_offset = 7 * 3600;
-            // Awal hari ini dalam UTC
-            $today_start_utc = strtotime(date('Y-m-d', $now + $wib_offset) . ' 00:00:00') - $wib_offset;
-            $time_from  = $today_start_utc;
-            $time_till  = $now; // "now" — bukan akhir hari
+            try {
+                // Force timezone Asia/Jakarta (WIB)
+                $tz = new DateTimeZone('Asia/Jakarta');
+                $dt = new DateTime('now', $tz);
+                $dt->setTime(0, 0, 0); // Set start ke 00:00:00 WIB
+                
+                $time_from = $dt->getTimestamp();
+                $time_till = time(); // Now real-time
+            } catch (Exception $e) {
+                // Fallback jika timezone invalid (jarang terjadi)
+                $time_from = strtotime('today midnight');
+                $time_till = time();
+            }
         }
 
         // Cache key: gabung time_from + time_till dibulatkan per 5 menit
